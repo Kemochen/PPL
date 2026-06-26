@@ -1,0 +1,7 @@
+services:
+  ppl:
+    build: .
+    container_name: ppl-c172-calculator
+    restart: unless-stopped
+    ports:
+      - "8088:5000"
