@@ -144,29 +144,33 @@ def takeoff_distance(weight_lbs, pressure_altitude_ft, oat_c,
     }
 
 
-# User input
-weight = float(input("Weight lbs: "))
-pa = float(input("Pressure altitude ft: "))
-oat = float(input("OAT °C: "))
-headwind = float(input("Headwind kt, no headwind enter 0: "))
-tailwind = float(input("Tailwind kt, no tailwind enter 0: "))
+def main():
+    weight = float(input("Weight lbs: "))
+    pa = float(input("Pressure altitude ft: "))
+    oat = float(input("OAT C: "))
+    headwind = float(input("Headwind kt, no headwind enter 0: "))
+    tailwind = float(input("Tailwind kt, no tailwind enter 0: "))
 
-grass_input = input("Grass runway? y/n: ").strip().lower()
-grass = grass_input == "y"
+    grass_input = input("Grass runway? y/n: ").strip().lower()
+    grass = grass_input == "y"
 
-result = takeoff_distance(
-    weight_lbs=weight,
-    pressure_altitude_ft=pa,
-    oat_c=oat,
-    headwind_kt=headwind,
-    tailwind_kt=tailwind,
-    grass=grass
-)
+    result = takeoff_distance(
+        weight_lbs=weight,
+        pressure_altitude_ft=pa,
+        oat_c=oat,
+        headwind_kt=headwind,
+        tailwind_kt=tailwind,
+        grass=grass
+    )
 
-print("\n--- C172N Takeoff Distance ---")
-print(f"Input weight: {result['input_weight_lbs']} lb")
-print(f"Selected POH table: {result['selected_table_lbs']} lb")
-print(f"Ground roll: {result['ground_roll_ft']} ft")
-print(f"Total to clear 50 ft obstacle: {result['total_clear_50ft_ft']} ft")
-print(f"Lift off speed: {result['lift_off_kias']} KIAS")
-print(f"Speed at 50 ft: {result['at_50ft_kias']} KIAS")
+    print("\n--- C172N Takeoff Distance ---")
+    print(f"Input weight: {result['input_weight_lbs']} lb")
+    print(f"Selected POH table: {result['selected_table_lbs']} lb")
+    print(f"Ground roll: {result['ground_roll_ft']} ft")
+    print(f"Total to clear 50 ft obstacle: {result['total_clear_50ft_ft']} ft")
+    print(f"Lift off speed: {result['lift_off_kias']} KIAS")
+    print(f"Speed at 50 ft: {result['at_50ft_kias']} KIAS")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C172N PPL Calculator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Cessna 172N</p>
+        <h1>PPL 性能计算器</h1>
+      </div>
+      <div class="badge">Takeoff · Landing · Cruise</div>
+    </header>
+
+    <nav class="tabs" aria-label="Calculator tabs">
+      <button class="tab active" type="button" data-tab="takeoff">起飞</button>
+      <button class="tab" type="button" data-tab="landing">降落</button>
+      <button class="tab" type="button" data-tab="cruise">巡航</button>
+    </nav>
+
+    <section class="panel active" id="takeoff">
+      <form class="calculator" data-endpoint="/api/takeoff">
+        <div class="form-grid">
+          <label>重量 lb<input name="weight_lbs" type="number" step="1" value="2300" required></label>
+          <label>压力高度 ft<input name="pressure_altitude_ft" type="number" step="1" value="2000" required></label>
+          <label>外界温度 C<input name="oat_c" type="number" step="0.1" value="20" required></label>
+          <label>逆风 kt<input name="headwind_kt" type="number" step="0.1" value="0"></label>
+          <label>顺风 kt<input name="tailwind_kt" type="number" step="0.1" value="0"></label>
+          <label class="check"><input name="grass" type="checkbox"> 草地跑道</label>
+        </div>
+        <button class="primary" type="submit">计算起飞距离</button>
+      </form>
+      <div class="result" aria-live="polite"></div>
+    </section>
+
+    <section class="panel" id="landing">
+      <form class="calculator" data-endpoint="/api/landing">
+        <div class="form-grid">
+          <label>压力高度 ft<input name="pressure_altitude_ft" type="number" step="1" value="2000" required></label>
+          <label>外界温度 C<input name="oat_c" type="number" step="0.1" value="20" required></label>
+          <label>逆风 kt<input name="headwind_kt" type="number" step="0.1" value="0"></label>
+          <label>顺风 kt<input name="tailwind_kt" type="number" step="0.1" value="0"></label>
+          <label class="check"><input name="grass" type="checkbox"> 草地跑道</label>
+        </div>
+        <button class="primary" type="submit">计算降落距离</button>
+      </form>
+      <div class="result" aria-live="polite"></div>
+    </section>
+
+    <section class="panel" id="cruise">
+      <form class="calculator" data-endpoint="/api/cruise">
+        <div class="form-grid">
+          <label>压力高度 ft<input name="pressure_altitude_ft" type="number" step="1" value="6000" required></label>
+          <label>海平面温度 C<input name="sea_level_oat_c" type="number" step="0.1" value="15" required></label>
+          <label>RPM<input name="rpm" type="number" step="10" value="2400" required></label>
+        </div>
+        <button class="primary" type="submit">计算巡航性能</button>
+      </form>
+      <div class="result" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    const labels = {
+      input_weight_lbs: "输入重量",
+      selected_table_lbs: "POH 表格重量",
+      ground_roll_ft: "地面滑跑",
+      total_clear_50ft_ft: "越过 50 ft 总距离",
+      total_to_clear_50ft_ft: "越过 50 ft 总距离",
+      lift_off_kias: "离地速度",
+      at_50ft_kias: "50 ft 速度",
+      "Pressure altitude ft": "压力高度",
+      "ISA temp at altitude C": "高度 ISA 温度",
+      "OAT at altitude C": "高度外界温度",
+      "Temp offset from ISA C": "ISA 温差",
+      "Percent BHP": "功率",
+      KTAS: "真空速",
+      GPH: "油耗"
+    };
+
+    const units = {
+      input_weight_lbs: "lb",
+      selected_table_lbs: "lb",
+      ground_roll_ft: "ft",
+      total_clear_50ft_ft: "ft",
+      total_to_clear_50ft_ft: "ft",
+      lift_off_kias: "KIAS",
+      at_50ft_kias: "KIAS",
+      "Pressure altitude ft": "ft",
+      "ISA temp at altitude C": "C",
+      "OAT at altitude C": "C",
+      "Temp offset from ISA C": "C",
+      "Percent BHP": "%",
+      KTAS: "kt",
+      GPH: "gal/hr"
+    };
+
+    document.querySelectorAll(".tab").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab, .panel").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        document.getElementById(button.dataset.tab).classList.add("active");
+      });
+    });
+
+    document.querySelectorAll(".calculator").forEach((form) => {
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const resultBox = form.parentElement.querySelector(".result");
+        resultBox.className = "result loading";
+        resultBox.textContent = "Calculating...";
+
+        const response = await fetch(form.dataset.endpoint, {
+          method: "POST",
+          body: new FormData(form)
+        });
+        const payload = await response.json();
+
+        if (!payload.ok) {
+          resultBox.className = "result error";
+          resultBox.textContent = payload.error;
+          return;
+        }
+
+        resultBox.className = "result";
+        resultBox.innerHTML = Object.entries(payload.result).map(([key, value]) => {
+          const label = labels[key] || key;
+          const unit = units[key] ? `<span>${units[key]}</span>` : "";
+          return `<div class="metric"><strong>${label}</strong><b>${value} ${unit}</b></div>`;
+        }).join("");
+      });
+    });
+  </script>
+</body>
+</html>
