@@ -111,7 +111,7 @@
           const key = entry[0];
           const value = entry[1];
           const unit = units[key] ? "<span>" + units[key] + "</span>" : "";
-          return "<div class="metric"><strong>" + (labels[key] || key) + "</strong><b>" + value + " " + unit + "</b></div>";
+          return '<div class="metric"><strong>' + (labels[key] || key) + '</strong><b>' + value + ' ' + unit + '</b></div>';
         }).join("");
       });
     });
