@@ -156,14 +156,6 @@ def isa_temp_c(alt_ft):
     return 15 - 2 * (alt_ft / 1000)
 
 
-def oat_at_altitude_from_sea_level_oat(sea_level_oat_c, alt_ft):
-    """
-    Estimate OAT at cruise altitude from sea-level / 0 ft OAT.
-    Assumes standard lapse rate: 2°C per 1000 ft.
-    """
-    return sea_level_oat_c - 2 * (alt_ft / 1000)
-
-
 def lerp(x, x0, y0, x1, y1):
     """
     Linear interpolation.
@@ -307,6 +299,153 @@ def interpolate_temp_at_fixed_alt(alt, temp_offset, rpm):
     )
 
 
+def format_cruise_tuple(values):
+    return f"{values[0]:.1f}%, {values[1]:.1f} KTAS, {values[2]:.1f} GPH"
+
+
+def format_temp_offset(value):
+    return f"{value:+.1f} C"
+
+
+def interpolate_rpm_detail(alt, temp_offset, rpm):
+    available_rpms = sorted(
+        r for (a, r, t) in data.keys()
+        if a == alt and t == temp_offset
+    )
+
+    if not available_rpms:
+        return None, []
+
+    try:
+        rpm_low, rpm_high = bracket(available_rpms, rpm, label="RPM")
+    except ValueError:
+        return None, []
+
+    v_low = get_exact_table_value(alt, temp_offset, rpm_low)
+    v_high = get_exact_table_value(alt, temp_offset, rpm_high)
+
+    if v_low is None or v_high is None:
+        return None, []
+
+    if rpm_low == rpm_high:
+        result = v_low
+        value = f"Exact {rpm:.1f} RPM row = {format_cruise_tuple(result)}"
+    else:
+        result = lerp_tuple(rpm, rpm_low, v_low, rpm_high, v_high)
+        value = (
+            f"{rpm_low:.1f} RPM: {format_cruise_tuple(v_low)}; "
+            f"{rpm_high:.1f} RPM: {format_cruise_tuple(v_high)}; "
+            f"{rpm:.1f} RPM result = {format_cruise_tuple(result)}"
+        )
+
+    return result, [{
+        "title": f"RPM bracket at {alt:.0f} ft / ISA {format_temp_offset(temp_offset)}",
+        "formula": "Interpolate between nearest RPM rows",
+        "value": value,
+    }]
+
+
+def interpolate_temp_detail(alt, temp_offset, rpm):
+    temp_blocks = sorted(
+        set(t for (a, r, t) in data.keys() if a == alt)
+    )
+
+    try:
+        temp_low, temp_high = bracket(
+            temp_blocks,
+            temp_offset,
+            label="temperature offset from ISA"
+        )
+    except ValueError:
+        return None, []
+
+    v_low, low_steps = interpolate_rpm_detail(alt, temp_low, rpm)
+    if temp_low == temp_high:
+        v_high, high_steps = v_low, []
+    else:
+        v_high, high_steps = interpolate_rpm_detail(alt, temp_high, rpm)
+
+    if v_low is None or v_high is None:
+        return None, []
+
+    steps = []
+
+    if temp_low == temp_high:
+        result = v_low
+        value = f"Exact ISA offset {format_temp_offset(temp_offset)} = {format_cruise_tuple(result)}"
+    else:
+        result = lerp_tuple(temp_offset, temp_low, v_low, temp_high, v_high)
+        value = (
+            f"{format_temp_offset(temp_low)}: {format_cruise_tuple(v_low)}; "
+            f"{format_temp_offset(temp_high)}: {format_cruise_tuple(v_high)}; "
+            f"{format_temp_offset(temp_offset)} result = {format_cruise_tuple(result)}"
+        )
+
+    steps.append({
+        "title": f"Temperature bracket at {alt:.0f} ft",
+        "formula": "Interpolate between ISA temperature offset blocks",
+        "value": value,
+    })
+
+    return result, steps
+
+
+def estimate_from_oat_at_altitude_detail(alt_ft, oat_at_altitude_c, rpm):
+    isa = isa_temp_c(alt_ft)
+    temp_offset = oat_at_altitude_c - isa
+
+    altitudes = sorted(set(a for (a, r, t) in data.keys()))
+    alt_low, alt_high = bracket(
+        altitudes,
+        alt_ft,
+        label="pressure altitude"
+    )
+
+    v_low, low_steps = interpolate_temp_detail(alt_low, temp_offset, rpm)
+    v_high, high_steps = interpolate_temp_detail(alt_high, temp_offset, rpm)
+
+    if v_low is None or v_high is None:
+        raise ValueError(
+            "This pressure altitude / temperature / RPM combination "
+            "cannot be interpolated because one or more required POH "
+            "table cells are missing.\n"
+            "Try a lower RPM, or check whether this point is inside the "
+            "available POH table area."
+        )
+
+    steps = []
+    steps.extend(low_steps)
+    if alt_high != alt_low:
+        steps.extend(high_steps)
+
+    if alt_low == alt_high:
+        result = v_low
+        altitude_value = f"Exact altitude {alt_ft:.1f} ft = {format_cruise_tuple(result)}"
+    else:
+        result = lerp_tuple(alt_ft, alt_low, v_low, alt_high, v_high)
+        altitude_value = (
+            f"{alt_low:.1f} ft: {format_cruise_tuple(v_low)}; "
+            f"{alt_high:.1f} ft: {format_cruise_tuple(v_high)}; "
+            f"{alt_ft:.1f} ft result = {format_cruise_tuple(result)}"
+        )
+
+    steps.append({
+        "title": "Final altitude interpolation",
+        "formula": "Interpolate between pressure-altitude rows",
+        "value": altitude_value,
+    })
+
+    return {
+        "Pressure altitude ft": round(alt_ft, 1),
+        "ISA temp at altitude C": round(isa, 1),
+        "OAT at altitude C": round(oat_at_altitude_c, 1),
+        "Temp offset from ISA C": round(temp_offset, 1),
+        "Percent BHP": round(result[0], 1),
+        "KTAS": round(result[1], 1),
+        "GPH": round(result[2], 1),
+    }, steps
+
+
 def estimate_from_oat_at_altitude(alt_ft, oat_at_altitude_c, rpm):
     """
     Main POH-style interpolation.
@@ -376,52 +515,107 @@ def estimate_from_oat_at_altitude(alt_ft, oat_at_altitude_c, rpm):
         )
 
     return {
-        "Pressure altitude ft": round(alt_ft, 0),
+        "Pressure altitude ft": round(alt_ft, 1),
         "ISA temp at altitude C": round(isa, 1),
         "OAT at altitude C": round(oat_at_altitude_c, 1),
         "Temp offset from ISA C": round(temp_offset, 1),
         "Percent BHP": round(result[0], 1),
         "KTAS": round(result[1], 1),
-        "GPH": round(result[2], 2),
+        "GPH": round(result[2], 1),
     }
 
 
-def estimate_from_sea_level_oat(alt_ft, sea_level_oat_c, rpm):
-    """
-    User-friendly wrapper.
+def estimate_from_oat_bracket(
+    alt_ft,
+    lower_alt_ft,
+    lower_oat_c,
+    upper_alt_ft,
+    upper_oat_c,
+    rpm
+):
+    if lower_alt_ft == upper_alt_ft:
+        raise ValueError("Lower and upper OAT altitudes must be different.")
 
-    You input sea-level / 0 ft OAT.
-    Program estimates OAT at cruise altitude using standard lapse rate.
-    """
-    oat_altitude = oat_at_altitude_from_sea_level_oat(
-        sea_level_oat_c,
-        alt_ft
+    if lower_alt_ft > upper_alt_ft:
+        lower_alt_ft, upper_alt_ft = upper_alt_ft, lower_alt_ft
+        lower_oat_c, upper_oat_c = upper_oat_c, lower_oat_c
+
+    if alt_ft < lower_alt_ft or alt_ft > upper_alt_ft:
+        raise ValueError("Pressure altitude must be between the two OAT altitude points.")
+
+    oat_altitude = lerp(
+        alt_ft,
+        lower_alt_ft,
+        lower_oat_c,
+        upper_alt_ft,
+        upper_oat_c
     )
 
-    return estimate_from_oat_at_altitude(
+    result, interpolation_steps = estimate_from_oat_at_altitude_detail(
         alt_ft,
         oat_altitude,
         rpm
     )
+
+    result["calculation_steps"] = [
+        {
+            "title": "1. Inputs",
+            "formula": "PA, OAT bracket, RPM",
+            "value": (
+                f"PA {alt_ft:.1f} ft, "
+                f"{lower_alt_ft:.1f} ft OAT {lower_oat_c:.1f} C, "
+                f"{upper_alt_ft:.1f} ft OAT {upper_oat_c:.1f} C, "
+                f"{rpm:.1f} RPM"
+            ),
+        },
+        {
+            "title": "2. OAT interpolation",
+            "formula": "OAT = lower OAT + altitude ratio x OAT difference",
+            "value": (
+                f"{lower_oat_c:.1f} + ({alt_ft:.1f} - {lower_alt_ft:.1f}) / "
+                f"({upper_alt_ft:.1f} - {lower_alt_ft:.1f}) x "
+                f"({upper_oat_c:.1f} - {lower_oat_c:.1f}) = {oat_altitude:.1f} C"
+            ),
+        },
+        {
+            "title": "3. ISA temperature",
+            "formula": "15 C - 2 C per 1000 ft",
+            "value": f"15.0 - 2.0 x {alt_ft / 1000:.1f} = {result['ISA temp at altitude C']:.1f} C",
+        },
+        {
+            "title": "4. ISA offset",
+            "formula": "OAT at altitude - ISA temp",
+            "value": f"{oat_altitude:.1f} - {result['ISA temp at altitude C']:.1f} = {result['Temp offset from ISA C']:.1f} C",
+        },
+        *interpolation_steps,
+    ]
+
+    return result
 
 
 def main():
     print("C172N Cruise Performance Calculator")
     print("2300 lb, recommended lean mixture")
     print("-----------------------------------")
-    print("Input OAT is sea-level / 0 ft OAT.")
-    print("Program assumes 2°C per 1000 ft lapse rate.")
+    print("Input two OAT altitude points.")
+    print("Program interpolates OAT at cruise altitude.")
     print()
 
     try:
         altitude = float(input("Pressure altitude ft: "))
-        sea_level_oat = float(input("Sea level / 0 ft OAT °C: "))
+        lower_altitude = float(input("Lower OAT altitude ft: "))
+        lower_oat = float(input("Lower altitude OAT C: "))
+        upper_altitude = float(input("Upper OAT altitude ft: "))
+        upper_oat = float(input("Upper altitude OAT C: "))
         rpm = float(input("RPM: "))
 
-        result = estimate_from_sea_level_oat(
-            altitude,
-            sea_level_oat,
-            rpm
+        result = estimate_from_oat_bracket(
+            alt_ft=altitude,
+            lower_alt_ft=lower_altitude,
+            lower_oat_c=lower_oat,
+            upper_alt_ft=upper_altitude,
+            upper_oat_c=upper_oat,
+            rpm=rpm,
         )
 
         print("\nEstimated cruise performance:")

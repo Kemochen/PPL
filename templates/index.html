@@ -17,7 +17,7 @@
         <div class="badge">Takeoff - Landing - Cruise</div>
         <button class="language-toggle" type="button" aria-label="Switch language">
           <span class="toggle-option active" data-lang-pill="en">EN</span>
-          <span class="toggle-option" data-lang-pill="zh">中</span>
+          <span class="toggle-option" data-lang-pill="zh">&#20013;&#25991;</span>
         </button>
       </div>
     </header>
@@ -34,13 +34,15 @@
           <label><span data-i18n="weight">Weight</span><small>lb</small><input name="weight_lbs" type="number" step="1" value="2300" required></label>
           <label><span data-i18n="pressureAltitude">Pressure altitude</span><small>ft</small><input name="pressure_altitude_ft" type="number" step="1" value="2000" required></label>
           <label><span data-i18n="oat">Outside air temp</span><small>C</small><input name="oat_c" type="number" step="0.1" value="20" required></label>
-          <label><span data-i18n="headwind">Headwind</span><small>kt</small><input name="headwind_kt" type="number" step="0.1" value="0"></label>
-          <label><span data-i18n="tailwind">Tailwind</span><small>kt</small><input name="tailwind_kt" type="number" step="0.1" value="0"></label>
+          <label><span data-i18n="runway">Runway</span><small>RWY</small><input name="runway_heading_deg" type="number" step="1" min="1" max="36" placeholder="23"></label>
+          <label><span data-i18n="windDirection">Wind direction</span><small>deg</small><input name="wind_direction_deg" type="number" step="1" min="0" max="360" placeholder="230"></label>
+          <label><span data-i18n="windSpeed">Wind speed</span><small>kt</small><input name="wind_speed_kt" type="number" step="0.1" min="0" placeholder="12"></label>
           <label class="check"><input name="grass" type="checkbox"><span data-i18n="grassRunway">Grass runway</span></label>
         </div>
         <button class="primary" type="submit" data-i18n="calculateTakeoff">Calculate takeoff distance</button>
       </form>
       <div class="result empty" aria-live="polite" data-i18n="resultHint">Enter conditions and calculate. Results will appear here.</div>
+      <div class="steps empty" aria-live="polite"></div>
     </section>
 
     <section class="panel" id="landing">
@@ -48,25 +50,31 @@
         <div class="form-grid">
           <label><span data-i18n="pressureAltitude">Pressure altitude</span><small>ft</small><input name="pressure_altitude_ft" type="number" step="1" value="2000" required></label>
           <label><span data-i18n="oat">Outside air temp</span><small>C</small><input name="oat_c" type="number" step="0.1" value="20" required></label>
-          <label><span data-i18n="headwind">Headwind</span><small>kt</small><input name="headwind_kt" type="number" step="0.1" value="0"></label>
-          <label><span data-i18n="tailwind">Tailwind</span><small>kt</small><input name="tailwind_kt" type="number" step="0.1" value="0"></label>
+          <label><span data-i18n="runway">Runway</span><small>RWY</small><input name="runway_heading_deg" type="number" step="1" min="1" max="36" placeholder="23"></label>
+          <label><span data-i18n="windDirection">Wind direction</span><small>deg</small><input name="wind_direction_deg" type="number" step="1" min="0" max="360" placeholder="230"></label>
+          <label><span data-i18n="windSpeed">Wind speed</span><small>kt</small><input name="wind_speed_kt" type="number" step="0.1" min="0" placeholder="12"></label>
           <label class="check"><input name="grass" type="checkbox"><span data-i18n="grassRunway">Grass runway</span></label>
         </div>
         <button class="primary" type="submit" data-i18n="calculateLanding">Calculate landing distance</button>
       </form>
       <div class="result empty" aria-live="polite" data-i18n="resultHint">Enter conditions and calculate. Results will appear here.</div>
+      <div class="steps empty" aria-live="polite"></div>
     </section>
 
     <section class="panel" id="cruise">
       <form class="calculator" data-endpoint="/api/cruise">
         <div class="form-grid">
-          <label><span data-i18n="pressureAltitude">Pressure altitude</span><small>ft</small><input name="pressure_altitude_ft" type="number" step="1" value="6000" required></label>
-          <label><span data-i18n="seaLevelOat">Sea-level OAT</span><small>C</small><input name="sea_level_oat_c" type="number" step="0.1" value="15" required></label>
+          <label><span data-i18n="pressureAltitude">Pressure altitude</span><small>ft</small><input name="pressure_altitude_ft" type="number" step="1" value="8500" required></label>
           <label><span>RPM</span><small data-i18n="engineSpeed">engine speed</small><input name="rpm" type="number" step="10" value="2400" required></label>
+          <label><span data-i18n="lowerOatAltitude">Lower OAT altitude</span><small>ft</small><input name="lower_oat_altitude_ft" type="number" step="1" value="6000" required></label>
+          <label><span data-i18n="lowerOat">Lower altitude OAT</span><small>C</small><input name="lower_oat_c" type="number" step="0.1" value="8" required></label>
+          <label><span data-i18n="upperOatAltitude">Upper OAT altitude</span><small>ft</small><input name="upper_oat_altitude_ft" type="number" step="1" value="9000" required></label>
+          <label><span data-i18n="upperOat">Upper altitude OAT</span><small>C</small><input name="upper_oat_c" type="number" step="0.1" value="2" required></label>
         </div>
         <button class="primary" type="submit" data-i18n="calculateCruise">Calculate cruise performance</button>
       </form>
       <div class="result empty" aria-live="polite" data-i18n="resultHint">Enter conditions and calculate. Results will appear here.</div>
+      <div class="steps empty" aria-live="polite"></div>
     </section>
   </main>
 
@@ -75,10 +83,13 @@
       en: {
         appTitle: "PPL Performance Calculator", takeoffTab: "Takeoff", landingTab: "Landing", cruiseTab: "Cruise",
         weight: "Weight", pressureAltitude: "Pressure altitude", oat: "Outside air temp", seaLevelOat: "Sea-level OAT",
-        headwind: "Headwind", tailwind: "Tailwind", grassRunway: "Grass runway", engineSpeed: "engine speed",
+        lowerOatAltitude: "Lower OAT altitude", lowerOat: "Lower altitude OAT", upperOatAltitude: "Upper OAT altitude", upperOat: "Upper altitude OAT",
+        runway: "Runway", windDirection: "Wind direction", windSpeed: "Wind speed",
+        grassRunway: "Grass runway", engineSpeed: "engine speed",
         calculateTakeoff: "Calculate takeoff distance", calculateLanding: "Calculate landing distance", calculateCruise: "Calculate cruise performance",
-        calculating: "Calculating...", resultHint: "Enter conditions and calculate. Results will appear here.",
-        input_weight_lbs: "Input weight", selected_table_lbs: "POH table weight", ground_roll_ft: "Ground roll",
+        calculating: "Calculating...", resultHint: "Enter conditions and calculate. Results will appear here.", stepsTitle: "Calculation steps",
+        input_weight_lbs: "Input weight", selected_table_lbs: "POH table weight", headwind_component_kt: "Headwind component",
+        tailwind_component_kt: "Tailwind component", crosswind_component_kt: "Crosswind component", ground_roll_ft: "Ground roll",
         total_clear_50ft_ft: "Total over 50 ft", total_to_clear_50ft_ft: "Total over 50 ft",
         lift_off_kias: "Lift-off speed", at_50ft_kias: "Speed at 50 ft", "Pressure altitude ft": "Pressure altitude",
         "ISA temp at altitude C": "ISA temp at altitude", "OAT at altitude C": "OAT at altitude",
@@ -87,28 +98,82 @@
       zh: {
         appTitle: "PPL \u6027\u80fd\u8ba1\u7b97\u5668", takeoffTab: "\u8d77\u98de", landingTab: "\u964d\u843d", cruiseTab: "\u5de1\u822a",
         weight: "\u91cd\u91cf", pressureAltitude: "\u538b\u529b\u9ad8\u5ea6", oat: "\u5916\u754c\u6e29\u5ea6", seaLevelOat: "\u6d77\u5e73\u9762\u6e29\u5ea6",
-        headwind: "\u9006\u98ce", tailwind: "\u987a\u98ce", grassRunway: "\u8349\u5730\u8dd1\u9053", engineSpeed: "\u53d1\u52a8\u673a\u8f6c\u901f",
+        lowerOatAltitude: "\u4f4e\u70b9 OAT \u9ad8\u5ea6", lowerOat: "\u4f4e\u70b9 OAT", upperOatAltitude: "\u9ad8\u70b9 OAT \u9ad8\u5ea6", upperOat: "\u9ad8\u70b9 OAT",
+        runway: "\u8dd1\u9053", windDirection: "\u98ce\u5411", windSpeed: "\u98ce\u901f",
+        grassRunway: "\u8349\u5730\u8dd1\u9053", engineSpeed: "\u53d1\u52a8\u673a\u8f6c\u901f",
         calculateTakeoff: "\u8ba1\u7b97\u8d77\u98de\u8ddd\u79bb", calculateLanding: "\u8ba1\u7b97\u964d\u843d\u8ddd\u79bb", calculateCruise: "\u8ba1\u7b97\u5de1\u822a\u6027\u80fd",
-        calculating: "\u8ba1\u7b97\u4e2d...", resultHint: "\u8f93\u5165\u6761\u4ef6\u540e\u70b9\u51fb\u8ba1\u7b97\uff0c\u7ed3\u679c\u4f1a\u663e\u793a\u5728\u8fd9\u91cc\u3002",
-        input_weight_lbs: "\u8f93\u5165\u91cd\u91cf", selected_table_lbs: "POH \u8868\u683c\u91cd\u91cf", ground_roll_ft: "\u5730\u9762\u6ed1\u8dd1",
+        calculating: "\u8ba1\u7b97\u4e2d...", resultHint: "\u8f93\u5165\u6761\u4ef6\u540e\u70b9\u51fb\u8ba1\u7b97\uff0c\u7ed3\u679c\u4f1a\u663e\u793a\u5728\u8fd9\u91cc\u3002", stepsTitle: "\u8ba1\u7b97\u6b65\u9aa4",
+        input_weight_lbs: "\u8f93\u5165\u91cd\u91cf", selected_table_lbs: "POH \u8868\u683c\u91cd\u91cf", headwind_component_kt: "\u9006\u98ce\u5206\u91cf",
+        tailwind_component_kt: "\u987a\u98ce\u5206\u91cf", crosswind_component_kt: "\u4fa7\u98ce\u5206\u91cf", ground_roll_ft: "\u5730\u9762\u6ed1\u8dd1",
         total_clear_50ft_ft: "\u8d8a\u8fc7 50 ft \u603b\u8ddd\u79bb", total_to_clear_50ft_ft: "\u8d8a\u8fc7 50 ft \u603b\u8ddd\u79bb",
         lift_off_kias: "\u79bb\u5730\u901f\u5ea6", at_50ft_kias: "50 ft \u901f\u5ea6", "Pressure altitude ft": "\u538b\u529b\u9ad8\u5ea6",
         "ISA temp at altitude C": "\u9ad8\u5ea6 ISA \u6e29\u5ea6", "OAT at altitude C": "\u9ad8\u5ea6\u5916\u754c\u6e29\u5ea6",
         "Temp offset from ISA C": "ISA \u6e29\u5dee", "Percent BHP": "\u529f\u7387", KTAS: "\u771f\u7a7a\u901f", GPH: "\u6cb9\u8017"
       }
     };
-    const units = { input_weight_lbs: "lb", selected_table_lbs: "lb", ground_roll_ft: "ft", total_clear_50ft_ft: "ft", total_to_clear_50ft_ft: "ft", lift_off_kias: "KIAS", at_50ft_kias: "KIAS", "Pressure altitude ft": "ft", "ISA temp at altitude C": "C", "OAT at altitude C": "C", "Temp offset from ISA C": "C", "Percent BHP": "%", KTAS: "kt", GPH: "gal/hr" };
+    const units = { input_weight_lbs: "lb", selected_table_lbs: "lb", headwind_component_kt: "kt", tailwind_component_kt: "kt", crosswind_component_kt: "kt", ground_roll_ft: "ft", total_clear_50ft_ft: "ft", total_to_clear_50ft_ft: "ft", lift_off_kias: "KIAS", at_50ft_kias: "KIAS", "Pressure altitude ft": "ft", "ISA temp at altitude C": "C", "OAT at altitude C": "C", "Temp offset from ISA C": "C", "Percent BHP": "%", KTAS: "kt", GPH: "gal/hr" };
     let currentLang = localStorage.getItem("pplLanguage") || "en";
     function t(key) { return translations[currentLang][key] || translations.en[key] || key; }
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, function(char) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[char];
+      });
+    }
+    function formatValue(value) {
+      return typeof value === "number" ? value.toFixed(1) : value;
+    }
     function renderResult(resultBox, result) {
       resultBox.className = "result";
       resultBox.dataset.lastResult = JSON.stringify(result);
       resultBox.innerHTML = Object.entries(result).map(function(entry) {
         const key = entry[0];
-        const value = entry[1];
+        const value = formatValue(entry[1]);
         const unit = units[key] ? "<span>" + units[key] + "</span>" : "";
-        return "<div class=\"metric\"><strong>" + t(key) + "</strong><b>" + value + " " + unit + "</b></div>";
+        return "<div class=\"metric\"><strong>" + escapeHtml(t(key)) + "</strong><b>" + escapeHtml(value) + " " + unit + "</b></div>";
       }).join("");
+    }
+    function renderInterpolationStep(step) {
+      return [
+        "<article class=\"interp-card\">",
+        "<h3>" + escapeHtml(step.title) + "</h3>",
+        "<div class=\"interp-layout\">",
+        "<div class=\"interp-table-wrap\">",
+        "<table class=\"interp-table\">",
+        "<thead><tr><th>PA / OAT</th><th>" + escapeHtml(step.temp_low) + "</th><th>" + escapeHtml(step.temp_high) + "</th></tr></thead>",
+        "<tbody>",
+        "<tr><th>" + escapeHtml(step.alt_low) + "</th><td>" + escapeHtml(step.q11) + "</td><td>" + escapeHtml(step.q12) + "</td></tr>",
+        "<tr><th>" + escapeHtml(step.alt_high) + "</th><td>" + escapeHtml(step.q21) + "</td><td>" + escapeHtml(step.q22) + "</td></tr>",
+        "</tbody>",
+        "</table>",
+        "<p>Target: " + escapeHtml(step.target_alt) + ", " + escapeHtml(step.target_temp) + "</p>",
+        "</div>",
+        "<div class=\"interp-math\">",
+        "<div><span>1</span><p>Altitude interpolation at " + escapeHtml(step.temp_low) + "</p><strong>" + escapeHtml(step.low_formula) + " = " + escapeHtml(step.low_result) + "</strong></div>",
+        "<div><span>2</span><p>Altitude interpolation at " + escapeHtml(step.temp_high) + "</p><strong>" + escapeHtml(step.high_formula) + " = " + escapeHtml(step.high_result) + "</strong></div>",
+        "<div><span>3</span><p>Temperature interpolation to " + escapeHtml(step.target_temp) + "</p><strong>" + escapeHtml(step.temp_formula) + " = " + escapeHtml(step.value) + "</strong></div>",
+        "</div>",
+        "</div>",
+        "</article>"
+      ].join("");
+    }
+    function renderStep(step) {
+      if (step.kind === "interpolation") {
+        return renderInterpolationStep(step);
+      }
+      return "<article class=\"step-card\"><h3>" + escapeHtml(step.title) + "</h3><p>" + escapeHtml(step.formula) + "</p><strong>" + escapeHtml(step.value) + "</strong></article>";
+    }
+    function renderSteps(stepsBox, steps) {
+      if (!steps || !steps.length) {
+        stepsBox.className = "steps empty";
+        stepsBox.innerHTML = "";
+        delete stepsBox.dataset.lastSteps;
+        return;
+      }
+      stepsBox.className = "steps";
+      stepsBox.dataset.lastSteps = JSON.stringify(steps);
+      stepsBox.innerHTML = "<h2>" + escapeHtml(t("stepsTitle")) + "</h2><div class=\"steps-grid\">" + steps.map(function(step) {
+        return renderStep(step);
+      }).join("") + "</div>";
     }
     function applyLanguage(lang) {
       currentLang = lang;
@@ -118,6 +183,7 @@
       document.querySelectorAll("[data-lang-pill]").forEach(function(node) { node.classList.toggle("active", node.dataset.langPill === lang); });
       document.querySelectorAll(".result.empty").forEach(function(node) { node.textContent = t("resultHint"); });
       document.querySelectorAll(".result[data-last-result]").forEach(function(node) { renderResult(node, JSON.parse(node.dataset.lastResult)); });
+      document.querySelectorAll(".steps[data-last-steps]").forEach(function(node) { renderSteps(node, JSON.parse(node.dataset.lastSteps)); });
     }
     document.querySelector(".language-toggle").addEventListener("click", function() { applyLanguage(currentLang === "en" ? "zh" : "en"); });
     document.querySelectorAll(".tab").forEach(function(button) {
@@ -131,17 +197,21 @@
       form.addEventListener("submit", async function(event) {
         event.preventDefault();
         const resultBox = form.parentElement.querySelector(".result");
+        const stepsBox = form.parentElement.querySelector(".steps");
         resultBox.className = "result loading";
         resultBox.textContent = t("calculating");
+        renderSteps(stepsBox, []);
         const response = await fetch(form.dataset.endpoint, { method: "POST", body: new FormData(form) });
         const payload = await response.json();
         if (!payload.ok) {
           resultBox.className = "result error";
           resultBox.textContent = payload.error;
           delete resultBox.dataset.lastResult;
+          renderSteps(stepsBox, []);
           return;
         }
         renderResult(resultBox, payload.result);
+        renderSteps(stepsBox, payload.steps);
       });
     });
     applyLanguage(currentLang);
