@@ -14,7 +14,7 @@
         <h1 data-i18n="appTitle">PPL Performance Calculator</h1>
       </div>
       <div class="top-actions">
-        <div class="badge">Takeoff - Landing - Cruise</div>
+        <div class="badge">Takeoff - Landing - Cruise - Climb</div>
         <button class="language-toggle" type="button" aria-label="Switch language">
           <span class="toggle-option active" data-lang-pill="en">EN</span>
           <span class="toggle-option" data-lang-pill="zh">&#20013;&#25991;</span>
@@ -26,6 +26,7 @@
       <button class="tab active" type="button" data-tab="takeoff" data-i18n="takeoffTab">Takeoff</button>
       <button class="tab" type="button" data-tab="landing" data-i18n="landingTab">Landing</button>
       <button class="tab" type="button" data-tab="cruise" data-i18n="cruiseTab">Cruise</button>
+      <button class="tab" type="button" data-tab="climb" data-i18n="climbTab">Climb</button>
     </nav>
 
     <section class="panel active" id="takeoff">
@@ -76,42 +77,69 @@
       <div class="result empty" aria-live="polite" data-i18n="resultHint">Enter conditions and calculate. Results will appear here.</div>
       <div class="steps empty" aria-live="polite"></div>
     </section>
+
+    <section class="panel" id="climb">
+      <form class="calculator" data-endpoint="/api/climb">
+        <div class="form-grid">
+          <label><span data-i18n="pressureAltitude">Pressure altitude</span><small>ft</small><input name="pressure_altitude_ft" type="number" step="1" value="500" required></label>
+          <label><span data-i18n="targetAltitude">Target altitude</span><small>ft</small><input name="target_altitude_ft" type="number" step="1" value="6500" required></label>
+          <label><span data-i18n="oat">Outside air temp</span><small>C</small><input name="oat_c" type="number" step="0.1" value="25" required></label>
+        </div>
+        <button class="primary" type="submit" data-i18n="calculateClimb">Calculate climb performance</button>
+      </form>
+      <div class="result empty" aria-live="polite" data-i18n="resultHint">Enter conditions and calculate. Results will appear here.</div>
+      <div class="steps empty" aria-live="polite"></div>
+    </section>
   </main>
 
   <script>
     const translations = {
       en: {
-        appTitle: "PPL Performance Calculator", takeoffTab: "Takeoff", landingTab: "Landing", cruiseTab: "Cruise",
+        appTitle: "PPL Performance Calculator", takeoffTab: "Takeoff", landingTab: "Landing", cruiseTab: "Cruise", climbTab: "Climb",
         weight: "Weight", pressureAltitude: "Pressure altitude", oat: "Outside air temp", seaLevelOat: "Sea-level OAT",
         lowerOatAltitude: "Lower OAT altitude", lowerOat: "Lower altitude OAT", upperOatAltitude: "Upper OAT altitude", upperOat: "Upper altitude OAT",
+        targetAltitude: "Target altitude",
         runway: "Runway", windDirection: "Wind direction", windSpeed: "Wind speed",
         grassRunway: "Grass runway", engineSpeed: "engine speed",
-        calculateTakeoff: "Calculate takeoff distance", calculateLanding: "Calculate landing distance", calculateCruise: "Calculate cruise performance",
+        calculateTakeoff: "Calculate takeoff distance", calculateLanding: "Calculate landing distance", calculateCruise: "Calculate cruise performance", calculateClimb: "Calculate climb performance",
         calculating: "Calculating...", resultHint: "Enter conditions and calculate. Results will appear here.", stepsTitle: "Calculation steps",
         input_weight_lbs: "Input weight", selected_table_lbs: "POH table weight", headwind_component_kt: "Headwind component",
         tailwind_component_kt: "Tailwind component", crosswind_component_kt: "Crosswind component", ground_roll_ft: "Ground roll",
         total_clear_50ft_ft: "Total over 50 ft", total_to_clear_50ft_ft: "Total over 50 ft",
         lift_off_kias: "Lift-off speed", at_50ft_kias: "Speed at 50 ft", "Pressure altitude ft": "Pressure altitude",
         "ISA temp at altitude C": "ISA temp at altitude", "OAT at altitude C": "OAT at altitude",
-        "Temp offset from ISA C": "Temp offset from ISA", "Percent BHP": "Power", KTAS: "True airspeed", GPH: "Fuel flow"
+        "Temp offset from ISA C": "Temp offset from ISA", "Percent BHP": "Power", KTAS: "True airspeed", GPH: "Fuel flow",
+        pressure_alt_ft: "Pressure altitude", target_alt_ft: "Target altitude", oat_c: "OAT",
+        standard_oat_at_pressure_alt_c: "Standard OAT at start", climb_speed_kias_at_start: "Climb speed at start",
+        climb_speed_kias_at_target: "Climb speed at target", rate_of_climb_fpm_at_start: "Rate of climb at start",
+        rate_of_climb_fpm_at_target: "Rate of climb at target", time_to_climb_min: "Time to climb",
+        fuel_used_gal_climb_only: "Climb fuel", fuel_used_gal_with_start_taxi_takeoff: "Fuel incl. start/taxi/takeoff",
+        distance_to_climb_nm: "Distance to climb"
       },
       zh: {
-        appTitle: "PPL \u6027\u80fd\u8ba1\u7b97\u5668", takeoffTab: "\u8d77\u98de", landingTab: "\u964d\u843d", cruiseTab: "\u5de1\u822a",
+        appTitle: "PPL \u6027\u80fd\u8ba1\u7b97\u5668", takeoffTab: "\u8d77\u98de", landingTab: "\u964d\u843d", cruiseTab: "\u5de1\u822a", climbTab: "\u722c\u5347",
         weight: "\u91cd\u91cf", pressureAltitude: "\u538b\u529b\u9ad8\u5ea6", oat: "\u5916\u754c\u6e29\u5ea6", seaLevelOat: "\u6d77\u5e73\u9762\u6e29\u5ea6",
         lowerOatAltitude: "\u4f4e\u70b9 OAT \u9ad8\u5ea6", lowerOat: "\u4f4e\u70b9 OAT", upperOatAltitude: "\u9ad8\u70b9 OAT \u9ad8\u5ea6", upperOat: "\u9ad8\u70b9 OAT",
+        targetAltitude: "\u76ee\u6807\u9ad8\u5ea6",
         runway: "\u8dd1\u9053", windDirection: "\u98ce\u5411", windSpeed: "\u98ce\u901f",
         grassRunway: "\u8349\u5730\u8dd1\u9053", engineSpeed: "\u53d1\u52a8\u673a\u8f6c\u901f",
-        calculateTakeoff: "\u8ba1\u7b97\u8d77\u98de\u8ddd\u79bb", calculateLanding: "\u8ba1\u7b97\u964d\u843d\u8ddd\u79bb", calculateCruise: "\u8ba1\u7b97\u5de1\u822a\u6027\u80fd",
+        calculateTakeoff: "\u8ba1\u7b97\u8d77\u98de\u8ddd\u79bb", calculateLanding: "\u8ba1\u7b97\u964d\u843d\u8ddd\u79bb", calculateCruise: "\u8ba1\u7b97\u5de1\u822a\u6027\u80fd", calculateClimb: "\u8ba1\u7b97\u722c\u5347\u6027\u80fd",
         calculating: "\u8ba1\u7b97\u4e2d...", resultHint: "\u8f93\u5165\u6761\u4ef6\u540e\u70b9\u51fb\u8ba1\u7b97\uff0c\u7ed3\u679c\u4f1a\u663e\u793a\u5728\u8fd9\u91cc\u3002", stepsTitle: "\u8ba1\u7b97\u6b65\u9aa4",
         input_weight_lbs: "\u8f93\u5165\u91cd\u91cf", selected_table_lbs: "POH \u8868\u683c\u91cd\u91cf", headwind_component_kt: "\u9006\u98ce\u5206\u91cf",
         tailwind_component_kt: "\u987a\u98ce\u5206\u91cf", crosswind_component_kt: "\u4fa7\u98ce\u5206\u91cf", ground_roll_ft: "\u5730\u9762\u6ed1\u8dd1",
         total_clear_50ft_ft: "\u8d8a\u8fc7 50 ft \u603b\u8ddd\u79bb", total_to_clear_50ft_ft: "\u8d8a\u8fc7 50 ft \u603b\u8ddd\u79bb",
         lift_off_kias: "\u79bb\u5730\u901f\u5ea6", at_50ft_kias: "50 ft \u901f\u5ea6", "Pressure altitude ft": "\u538b\u529b\u9ad8\u5ea6",
         "ISA temp at altitude C": "\u9ad8\u5ea6 ISA \u6e29\u5ea6", "OAT at altitude C": "\u9ad8\u5ea6\u5916\u754c\u6e29\u5ea6",
-        "Temp offset from ISA C": "ISA \u6e29\u5dee", "Percent BHP": "\u529f\u7387", KTAS: "\u771f\u7a7a\u901f", GPH: "\u6cb9\u8017"
+        "Temp offset from ISA C": "ISA \u6e29\u5dee", "Percent BHP": "\u529f\u7387", KTAS: "\u771f\u7a7a\u901f", GPH: "\u6cb9\u8017",
+        pressure_alt_ft: "\u8d77\u59cb\u538b\u529b\u9ad8\u5ea6", target_alt_ft: "\u76ee\u6807\u9ad8\u5ea6", oat_c: "\u5916\u754c\u6e29\u5ea6",
+        standard_oat_at_pressure_alt_c: "\u8d77\u59cb\u6807\u51c6\u6e29\u5ea6", climb_speed_kias_at_start: "\u8d77\u59cb\u722c\u5347\u901f\u5ea6",
+        climb_speed_kias_at_target: "\u76ee\u6807\u9ad8\u5ea6\u722c\u5347\u901f\u5ea6", rate_of_climb_fpm_at_start: "\u8d77\u59cb\u722c\u5347\u7387",
+        rate_of_climb_fpm_at_target: "\u76ee\u6807\u722c\u5347\u7387", time_to_climb_min: "\u722c\u5347\u65f6\u95f4",
+        fuel_used_gal_climb_only: "\u722c\u5347\u7528\u6cb9", fuel_used_gal_with_start_taxi_takeoff: "\u542b\u542f\u52a8\u6ed1\u884c\u8d77\u98de\u7528\u6cb9",
+        distance_to_climb_nm: "\u722c\u5347\u8ddd\u79bb"
       }
     };
-    const units = { input_weight_lbs: "lb", selected_table_lbs: "lb", headwind_component_kt: "kt", tailwind_component_kt: "kt", crosswind_component_kt: "kt", ground_roll_ft: "ft", total_clear_50ft_ft: "ft", total_to_clear_50ft_ft: "ft", lift_off_kias: "KIAS", at_50ft_kias: "KIAS", "Pressure altitude ft": "ft", "ISA temp at altitude C": "C", "OAT at altitude C": "C", "Temp offset from ISA C": "C", "Percent BHP": "%", KTAS: "kt", GPH: "gal/hr" };
+    const units = { input_weight_lbs: "lb", selected_table_lbs: "lb", headwind_component_kt: "kt", tailwind_component_kt: "kt", crosswind_component_kt: "kt", ground_roll_ft: "ft", total_clear_50ft_ft: "ft", total_to_clear_50ft_ft: "ft", lift_off_kias: "KIAS", at_50ft_kias: "KIAS", "Pressure altitude ft": "ft", "ISA temp at altitude C": "C", "OAT at altitude C": "C", "Temp offset from ISA C": "C", "Percent BHP": "%", KTAS: "kt", GPH: "gal/hr", pressure_alt_ft: "ft", target_alt_ft: "ft", oat_c: "C", standard_oat_at_pressure_alt_c: "C", climb_speed_kias_at_start: "KIAS", climb_speed_kias_at_target: "KIAS", rate_of_climb_fpm_at_start: "fpm", rate_of_climb_fpm_at_target: "fpm", time_to_climb_min: "min", fuel_used_gal_climb_only: "gal", fuel_used_gal_with_start_taxi_takeoff: "gal", distance_to_climb_nm: "NM" };
     let currentLang = localStorage.getItem("pplLanguage") || "en";
     function t(key) { return translations[currentLang][key] || translations.en[key] || key; }
     function escapeHtml(value) {

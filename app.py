@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template, request
 import math
 
 from cruise import estimate_from_oat_bracket
+from climb import climb_from_pressure_alt
 from landing import landing_distance
 from takeoff import takeoff_distance
 
@@ -164,6 +165,15 @@ def api_cruise():
         upper_alt_ft=number_value("upper_oat_altitude_ft"),
         upper_oat_c=number_value("upper_oat_c"),
         rpm=number_value("rpm"),
+    ))
+
+
+@app.post("/api/climb")
+def api_climb():
+    return api_response(lambda: climb_from_pressure_alt(
+        pressure_alt_ft=number_value("pressure_altitude_ft"),
+        target_alt_ft=number_value("target_altitude_ft"),
+        oat_c=number_value("oat_c"),
     ))
 
 
