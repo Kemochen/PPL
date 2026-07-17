@@ -14,7 +14,7 @@
         <h1 data-i18n="appTitle">PPL Performance Calculator</h1>
       </div>
       <div class="top-actions">
-        <div class="badge">Takeoff - Landing - Cruise - Climb</div>
+        <div class="badge">Takeoff - Landing - Cruise - Climb - W&B</div>
         <button class="language-toggle" type="button" aria-label="Switch language">
           <span class="toggle-option active" data-lang-pill="en">EN</span>
           <span class="toggle-option" data-lang-pill="zh">&#20013;&#25991;</span>
@@ -27,6 +27,7 @@
       <button class="tab" type="button" data-tab="landing" data-i18n="landingTab">Landing</button>
       <button class="tab" type="button" data-tab="cruise" data-i18n="cruiseTab">Cruise</button>
       <button class="tab" type="button" data-tab="climb" data-i18n="climbTab">Climb</button>
+      <button class="tab" type="button" data-tab="weight-balance" data-i18n="weightBalanceTab">W&B</button>
     </nav>
 
     <section class="panel active" id="takeoff">
@@ -90,18 +91,61 @@
       <div class="result empty" aria-live="polite" data-i18n="resultHint">Enter conditions and calculate. Results will appear here.</div>
       <div class="steps empty" aria-live="polite"></div>
     </section>
+
+    <section class="panel wide-panel" id="weight-balance">
+      <form class="calculator" data-endpoint="/api/weight-balance">
+        <div class="wb-input-table">
+          <div class="wb-head">Item</div>
+          <div class="wb-head">Arm (in)</div>
+          <div class="wb-head">Weight / Fuel</div>
+          <label><span>Basic Empty Weight</span></label>
+          <input name="empty_arm_in" type="number" step="0.1" value="38.2" readonly>
+          <input name="empty_weight_lbs" type="number" step="0.1" value="1541" readonly>
+          <label><span>Pilot</span></label>
+          <input value="40" readonly>
+          <input name="pilot_weight_lbs" type="number" step="0.1" value="180" required>
+          <label><span>Front Passenger</span></label>
+          <input value="40" readonly>
+          <input name="front_passenger_weight_lbs" type="number" step="0.1" value="205" required>
+          <label><span>Rear Left</span></label>
+          <input value="73" readonly>
+          <input name="rear_left_weight_lbs" type="number" step="0.1" value="205" required>
+          <label><span>Rear Right</span></label>
+          <input value="73" readonly>
+          <input name="rear_right_weight_lbs" type="number" step="0.1" value="0" required>
+          <label><span>Baggage 1</span></label>
+          <input value="95" readonly>
+          <input name="baggage1_weight_lbs" type="number" step="0.1" value="0" required>
+          <label><span>Baggage 2</span></label>
+          <input value="123" readonly>
+          <input name="baggage2_weight_lbs" type="number" step="0.1" value="0" required>
+          <label><span>Fuel</span><small>gal x 6</small></label>
+          <input value="48" readonly>
+          <input name="fuel_gal" type="number" step="0.1" value="25" required>
+          <label><span>Taxi Fuel</span><small>gal x 6</small></label>
+          <input value="48" readonly>
+          <input name="taxi_fuel_gal" type="number" step="0.1" value="1" required>
+          <label><span>Trip Fuel</span><small>gal x 6</small></label>
+          <input value="48" readonly>
+          <input name="trip_fuel_gal" type="number" step="0.1" value="12" required>
+        </div>
+        <button class="primary" type="submit" data-i18n="calculateWeightBalance">Calculate weight and balance</button>
+      </form>
+      <div class="result empty wb-result" aria-live="polite" data-i18n="resultHint">Enter conditions and calculate. Results will appear here.</div>
+      <div class="steps empty" aria-live="polite"></div>
+    </section>
   </main>
 
   <script>
     const translations = {
       en: {
-        appTitle: "PPL Performance Calculator", takeoffTab: "Takeoff", landingTab: "Landing", cruiseTab: "Cruise", climbTab: "Climb",
+        appTitle: "PPL Performance Calculator", takeoffTab: "Takeoff", landingTab: "Landing", cruiseTab: "Cruise", climbTab: "Climb", weightBalanceTab: "W&B",
         weight: "Weight", pressureAltitude: "Pressure altitude", oat: "Outside air temp", seaLevelOat: "Sea-level OAT",
         lowerOatAltitude: "Lower OAT altitude", lowerOat: "Lower altitude OAT", upperOatAltitude: "Upper OAT altitude", upperOat: "Upper altitude OAT",
         targetAltitude: "Target altitude",
         runway: "Runway", windDirection: "Wind direction", windSpeed: "Wind speed",
         grassRunway: "Grass runway", engineSpeed: "engine speed",
-        calculateTakeoff: "Calculate takeoff distance", calculateLanding: "Calculate landing distance", calculateCruise: "Calculate cruise performance", calculateClimb: "Calculate climb performance",
+        calculateTakeoff: "Calculate takeoff distance", calculateLanding: "Calculate landing distance", calculateCruise: "Calculate cruise performance", calculateClimb: "Calculate climb performance", calculateWeightBalance: "Calculate weight and balance",
         calculating: "Calculating...", resultHint: "Enter conditions and calculate. Results will appear here.", stepsTitle: "Calculation steps",
         input_weight_lbs: "Input weight", selected_table_lbs: "POH table weight", headwind_component_kt: "Headwind component",
         tailwind_component_kt: "Tailwind component", crosswind_component_kt: "Crosswind component", ground_roll_ft: "Ground roll",
@@ -117,13 +161,13 @@
         distance_to_climb_nm: "Distance to climb"
       },
       zh: {
-        appTitle: "PPL \u6027\u80fd\u8ba1\u7b97\u5668", takeoffTab: "\u8d77\u98de", landingTab: "\u964d\u843d", cruiseTab: "\u5de1\u822a", climbTab: "\u722c\u5347",
+        appTitle: "PPL \u6027\u80fd\u8ba1\u7b97\u5668", takeoffTab: "\u8d77\u98de", landingTab: "\u964d\u843d", cruiseTab: "\u5de1\u822a", climbTab: "\u722c\u5347", weightBalanceTab: "\u91cd\u91cf\u5e73\u8861",
         weight: "\u91cd\u91cf", pressureAltitude: "\u538b\u529b\u9ad8\u5ea6", oat: "\u5916\u754c\u6e29\u5ea6", seaLevelOat: "\u6d77\u5e73\u9762\u6e29\u5ea6",
         lowerOatAltitude: "\u4f4e\u70b9 OAT \u9ad8\u5ea6", lowerOat: "\u4f4e\u70b9 OAT", upperOatAltitude: "\u9ad8\u70b9 OAT \u9ad8\u5ea6", upperOat: "\u9ad8\u70b9 OAT",
         targetAltitude: "\u76ee\u6807\u9ad8\u5ea6",
         runway: "\u8dd1\u9053", windDirection: "\u98ce\u5411", windSpeed: "\u98ce\u901f",
         grassRunway: "\u8349\u5730\u8dd1\u9053", engineSpeed: "\u53d1\u52a8\u673a\u8f6c\u901f",
-        calculateTakeoff: "\u8ba1\u7b97\u8d77\u98de\u8ddd\u79bb", calculateLanding: "\u8ba1\u7b97\u964d\u843d\u8ddd\u79bb", calculateCruise: "\u8ba1\u7b97\u5de1\u822a\u6027\u80fd", calculateClimb: "\u8ba1\u7b97\u722c\u5347\u6027\u80fd",
+        calculateTakeoff: "\u8ba1\u7b97\u8d77\u98de\u8ddd\u79bb", calculateLanding: "\u8ba1\u7b97\u964d\u843d\u8ddd\u79bb", calculateCruise: "\u8ba1\u7b97\u5de1\u822a\u6027\u80fd", calculateClimb: "\u8ba1\u7b97\u722c\u5347\u6027\u80fd", calculateWeightBalance: "\u8ba1\u7b97\u91cd\u91cf\u4e0e\u5e73\u8861",
         calculating: "\u8ba1\u7b97\u4e2d...", resultHint: "\u8f93\u5165\u6761\u4ef6\u540e\u70b9\u51fb\u8ba1\u7b97\uff0c\u7ed3\u679c\u4f1a\u663e\u793a\u5728\u8fd9\u91cc\u3002", stepsTitle: "\u8ba1\u7b97\u6b65\u9aa4",
         input_weight_lbs: "\u8f93\u5165\u91cd\u91cf", selected_table_lbs: "POH \u8868\u683c\u91cd\u91cf", headwind_component_kt: "\u9006\u98ce\u5206\u91cf",
         tailwind_component_kt: "\u987a\u98ce\u5206\u91cf", crosswind_component_kt: "\u4fa7\u98ce\u5206\u91cf", ground_roll_ft: "\u5730\u9762\u6ed1\u8dd1",
@@ -150,7 +194,121 @@
     function formatValue(value) {
       return typeof value === "number" ? value.toFixed(1) : value;
     }
+    function renderCell(value, unit) {
+      if (value === null || value === undefined) {
+        return "";
+      }
+      const display = typeof value === "number" ? value.toFixed(1) : value;
+      return escapeHtml(display) + (unit ? " " + escapeHtml(unit) : "");
+    }
+    function renderWeightBalancePlot(plot) {
+      const minCg = 34;
+      const maxCg = 49;
+      const minWeight = 1450;
+      const maxWeight = 2350;
+      const width = 640;
+      const height = 320;
+      const padLeft = 52;
+      const padRight = 20;
+      const padTop = 18;
+      const padBottom = 42;
+      const innerWidth = width - padLeft - padRight;
+      const innerHeight = height - padTop - padBottom;
+      function x(cg) { return padLeft + ((cg - minCg) / (maxCg - minCg)) * innerWidth; }
+      function y(weight) { return padTop + (1 - ((weight - minWeight) / (maxWeight - minWeight))) * innerHeight; }
+      const envelopePoints = plot.envelope.map(function(point) {
+        return x(point.cg).toFixed(1) + "," + y(point.weight).toFixed(1);
+      }).join(" ");
+      const pathPoints = plot.points.map(function(point) {
+        return x(point.cg).toFixed(1) + "," + y(point.weight).toFixed(1);
+      }).join(" ");
+      const circles = plot.points.map(function(point, index) {
+        const ok = point.status === "OK";
+        return [
+          "<g>",
+          "<circle cx=\"" + x(point.cg).toFixed(1) + "\" cy=\"" + y(point.weight).toFixed(1) + "\" r=\"6\" class=\"" + (ok ? "plot-ok" : "plot-fail") + "\"></circle>",
+          "<text x=\"" + (x(point.cg) + 9).toFixed(1) + "\" y=\"" + (y(point.weight) - 8 + (index % 2) * 18).toFixed(1) + "\">" + escapeHtml(point.label) + "</text>",
+          "</g>"
+        ].join("");
+      }).join("");
+      return [
+        "<svg class=\"wb-plot\" viewBox=\"0 0 " + width + " " + height + "\" role=\"img\" aria-label=\"CG envelope plot\">",
+        "<line x1=\"" + padLeft + "\" y1=\"" + padTop + "\" x2=\"" + padLeft + "\" y2=\"" + (height - padBottom) + "\" class=\"plot-axis\"></line>",
+        "<line x1=\"" + padLeft + "\" y1=\"" + (height - padBottom) + "\" x2=\"" + (width - padRight) + "\" y2=\"" + (height - padBottom) + "\" class=\"plot-axis\"></line>",
+        "<text x=\"18\" y=\"24\">Weight</text>",
+        "<text x=\"" + (width - 82) + "\" y=\"" + (height - 10) + "\">CG (in)</text>",
+        "<polygon points=\"" + envelopePoints + "\" class=\"plot-envelope\"></polygon>",
+        "<polyline points=\"" + pathPoints + "\" class=\"plot-path\"></polyline>",
+        circles,
+        "</svg>"
+      ].join("");
+    }
+    function renderWeightBalanceResult(resultBox, result) {
+      resultBox.className = "result wb-result";
+      resultBox.dataset.lastResult = JSON.stringify(result);
+      const summary = result.summary;
+      const summaryHtml = [
+        ["Takeoff Weight", summary.takeoff_weight_lbs, "lb"],
+        ["Takeoff CG", summary.takeoff_cg_in, "in"],
+        ["Landing Weight", summary.landing_weight_lbs, "lb"],
+        ["Landing CG", summary.landing_cg_in, "in"]
+      ].map(function(item) {
+        return "<div class=\"metric\"><strong>" + escapeHtml(item[0]) + "</strong><b>" + renderCell(item[1], item[2]) + "</b></div>";
+      }).join("");
+      const rowsHtml = result.rows.map(function(row) {
+        return [
+          "<tr class=\"" + escapeHtml(row.kind) + "\">",
+          "<th>" + escapeHtml(row.item) + "</th>",
+          "<td>" + renderCell(row.arm, "in") + "</td>",
+          "<td>" + renderCell(row.weight, "lb") + "</td>",
+          "<td>" + renderCell(row.moment, "lb-in") + "</td>",
+          "<td>" + renderCell(row.cg, "in") + "</td>",
+          "</tr>"
+        ].join("");
+      }).join("");
+      const envelopeHtml = result.envelope.map(function(row) {
+        return [
+          "<tr class=\"" + (row.status === "OK" ? "ok" : "fail") + "\">",
+          "<th>" + escapeHtml(row.phase) + "</th>",
+          "<td>" + renderCell(row.weight, "lb") + "</td>",
+          "<td>" + renderCell(row.max_weight, "lb") + "</td>",
+          "<td>" + renderCell(row.cg, "in") + "</td>",
+          "<td>" + escapeHtml(row.limit) + "</td>",
+          "<td><strong>" + escapeHtml(row.status) + "</strong><span>" + escapeHtml(row.message) + "</span></td>",
+          "</tr>"
+        ].join("");
+      }).join("");
+      const buttonsHtml = result.explanations.map(function(item, index) {
+        return "<button class=\"explain-button" + (index === 0 ? " active" : "") + "\" type=\"button\" data-explain=\"" + index + "\">" + escapeHtml(item.title) + "</button>";
+      }).join("");
+      const explainLines = result.explanations[0].lines.map(function(line) {
+        return "<p>" + escapeHtml(line) + "</p>";
+      }).join("");
+      resultBox.innerHTML = [
+        "<div class=\"wb-layout\">",
+        "<section class=\"wb-summary\">" + summaryHtml + "</section>",
+        "<section class=\"wb-block\"><h2>Calculation Table</h2><div class=\"table-scroll\"><table class=\"wb-table\"><thead><tr><th>Item</th><th>Arm</th><th>Weight</th><th>Moment</th><th>CG</th></tr></thead><tbody>" + rowsHtml + "</tbody></table></div></section>",
+        "<section class=\"wb-block\"><h2>Envelope Check</h2><div class=\"table-scroll\"><table class=\"wb-table\"><thead><tr><th>Phase</th><th>Weight</th><th>Max</th><th>CG</th><th>CG Limit</th><th>Status</th></tr></thead><tbody>" + envelopeHtml + "</tbody></table></div></section>",
+        "<section class=\"wb-block\"><h2>Oral Exam Mode</h2><div class=\"explain-toolbar\">" + buttonsHtml + "</div><div class=\"explain-box\">" + explainLines + "</div></section>",
+        "<section class=\"wb-block\"><h2>CG Envelope Plot</h2>" + renderWeightBalancePlot(result.plot) + "</section>",
+        "</div>"
+      ].join("");
+      resultBox.querySelectorAll(".explain-button").forEach(function(button) {
+        button.addEventListener("click", function() {
+          const selected = result.explanations[Number(button.dataset.explain)];
+          resultBox.querySelectorAll(".explain-button").forEach(function(item) { item.classList.remove("active"); });
+          button.classList.add("active");
+          resultBox.querySelector(".explain-box").innerHTML = selected.lines.map(function(line) {
+            return "<p>" + escapeHtml(line) + "</p>";
+          }).join("");
+        });
+      });
+    }
     function renderResult(resultBox, result) {
+      if (result.kind === "weight_balance") {
+        renderWeightBalanceResult(resultBox, result);
+        return;
+      }
       resultBox.className = "result";
       resultBox.dataset.lastResult = JSON.stringify(result);
       resultBox.innerHTML = Object.entries(result).map(function(entry) {

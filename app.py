@@ -5,6 +5,7 @@ from cruise import estimate_from_oat_bracket
 from climb import climb_from_pressure_alt
 from landing import landing_distance
 from takeoff import takeoff_distance
+from weight_balance import calculate_weight_balance
 
 
 app = Flask(__name__)
@@ -174,6 +175,23 @@ def api_climb():
         pressure_alt_ft=number_value("pressure_altitude_ft"),
         target_alt_ft=number_value("target_altitude_ft"),
         oat_c=number_value("oat_c"),
+    ))
+
+
+@app.post("/api/weight-balance")
+def api_weight_balance():
+    return api_response(lambda: calculate_weight_balance(
+        empty_weight_lbs=number_value("empty_weight_lbs", 1541),
+        empty_arm_in=number_value("empty_arm_in", 38.2),
+        pilot_weight_lbs=number_value("pilot_weight_lbs"),
+        front_passenger_weight_lbs=number_value("front_passenger_weight_lbs"),
+        rear_left_weight_lbs=number_value("rear_left_weight_lbs"),
+        rear_right_weight_lbs=number_value("rear_right_weight_lbs"),
+        baggage1_weight_lbs=number_value("baggage1_weight_lbs"),
+        baggage2_weight_lbs=number_value("baggage2_weight_lbs"),
+        fuel_gal=number_value("fuel_gal"),
+        taxi_fuel_gal=number_value("taxi_fuel_gal"),
+        trip_fuel_gal=number_value("trip_fuel_gal"),
     ))
 
 

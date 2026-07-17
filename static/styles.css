@@ -32,6 +32,11 @@ h1 { margin: 0; font-size: clamp(30px, 5vw, 52px); line-height: 1.05; letter-spa
 .tab.active { color: #fff; background: var(--accent); }
 .panel { display: none; grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr); gap: 24px; align-items: start; }
 .panel.active { display: grid; }
+.wide-panel { grid-template-columns: minmax(300px, .8fr) minmax(0, 1.35fr); }
+#weight-balance.panel.active { grid-template-columns: 1fr; }
+#weight-balance .calculator,
+#weight-balance .wb-result,
+#weight-balance .steps { grid-column: 1 / -1; }
 .calculator, .result, .steps { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); box-shadow: 0 18px 48px rgba(29,42,52,.08); }
 .calculator { padding: 22px; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
@@ -72,6 +77,39 @@ input:focus { border-color: var(--accent); outline: 3px solid rgba(20,108,99,.16
 .metric b { font-size: 22px; text-align: right; }
 .metric span { color: var(--muted); font-size: 13px; font-weight: 700; }
 .error { color: var(--warn); font-weight: 700; }
+.wb-input-table { display: grid; grid-template-columns: minmax(120px, 1fr) 92px minmax(110px, 1fr); gap: 8px; align-items: center; }
+.wb-input-table label { min-height: 44px; align-content: center; }
+.wb-head { padding: 8px 0; color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+input[readonly] { background: #f4f7f8; color: #5d6870; }
+.wb-result { padding: 0; overflow: visible; }
+.wb-layout { display: grid; gap: 14px; padding: 16px; }
+.wb-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; border: 1px solid var(--line); border-radius: 8px; padding: 0 14px; background: #fbfcfd; }
+.wb-block { border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: #fbfcfd; }
+.wb-block h2 { margin: 0 0 12px; font-size: 18px; line-height: 1.2; }
+.table-scroll { width: 100%; overflow-x: auto; }
+.wb-table { width: 100%; min-width: 620px; border-collapse: collapse; background: #fff; }
+.wb-table th, .wb-table td { border: 1px solid var(--line); padding: 9px 8px; text-align: right; vertical-align: middle; font-size: 13px; }
+.wb-table th:first-child, .wb-table td:first-child { text-align: left; }
+.wb-table thead th { color: var(--muted); background: var(--soft); font-weight: 800; }
+.wb-table tbody th { color: var(--ink); font-weight: 800; }
+.wb-table tr.total th, .wb-table tr.total td { background: #edf6f4; color: var(--accent-dark); font-weight: 800; }
+.wb-table tr.burn th, .wb-table tr.burn td { color: #7d4d17; }
+.wb-table tr.fail th, .wb-table tr.fail td { background: #fff1ef; color: var(--warn); }
+.wb-table tr.ok td strong { color: var(--accent-dark); }
+.wb-table tr.fail td strong { color: var(--warn); }
+.wb-table td span { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.explain-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.explain-button { border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px; background: #fff; color: var(--ink); cursor: pointer; font: inherit; font-size: 13px; font-weight: 800; }
+.explain-button.active { border-color: var(--accent); color: #fff; background: var(--accent); }
+.explain-box { display: grid; gap: 8px; border: 1px solid var(--line); border-radius: 6px; padding: 12px; background: #fff; }
+.explain-box p { margin: 0; color: var(--ink); font-size: 14px; line-height: 1.4; }
+.wb-plot { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.wb-plot text { fill: var(--muted); font-size: 12px; font-weight: 800; }
+.plot-axis { stroke: #8d9aa3; stroke-width: 1.4; }
+.plot-envelope { fill: rgba(20,108,99,.10); stroke: var(--accent); stroke-width: 2; }
+.plot-path { fill: none; stroke: #202a31; stroke-width: 2.5; marker-end: none; }
+.plot-ok { fill: var(--accent); stroke: #fff; stroke-width: 2; }
+.plot-fail { fill: var(--warn); stroke: #fff; stroke-width: 2; }
 @media (max-width: 760px) {
   body { background: #f8fafb; }
   .shell { width: 100%; padding: 14px 10px 28px; }
@@ -101,4 +139,13 @@ input:focus { border-color: var(--accent); outline: 3px solid rgba(20,108,99,.16
   .interp-math span { width: 24px; height: 24px; }
   .metric { padding: 11px 0; }
   .metric b { font-size: 19px; }
+  .wb-input-table { grid-template-columns: minmax(0, 1fr) 78px minmax(0, 1fr); gap: 7px; }
+  .wb-input-table input { padding: 8px; }
+  .wb-head { font-size: 11px; }
+  .wb-result { margin: 0 -10px; }
+  .wb-layout { padding: 12px; gap: 12px; }
+  .wb-summary { grid-template-columns: 1fr; padding: 0 12px; }
+  .wb-block { padding: 12px; }
+  .wb-table th, .wb-table td { padding: 8px 7px; }
+  .explain-button { flex: 1 1 auto; }
 }
