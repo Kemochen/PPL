@@ -44,6 +44,9 @@ label { display: grid; gap: 6px; color: var(--muted); font-size: 14px; font-weig
 label small { color: #8a959d; font-size: 12px; font-weight: 700; }
 input { width: 100%; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; color: var(--ink); font: inherit; background: #fff; }
 input:focus { border-color: var(--accent); outline: 3px solid rgba(20,108,99,.16); }
+select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); font: inherit; }
+select:focus { border-color: var(--accent); outline: 3px solid rgba(20,108,99,.16); }
+[hidden] { display: none !important; }
 .check { display: flex; align-items: center; gap: 10px; min-height: 44px; padding-top: 23px; }
 .check input { width: 18px; min-height: 18px; flex: 0 0 auto; }
 .primary { width: 100%; margin-top: 20px; padding: 13px 18px; color: #fff; background: var(--accent); }

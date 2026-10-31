@@ -55,8 +55,38 @@ def wind_values_from_form():
     runway_heading, runway_note = runway_heading_from_input(runway_input)
     if not 0 <= wind_direction <= 360:
         raise ValueError("Wind direction must be between 0 and 360 degrees.")
-    if wind_speed < 0:
+    if not math.isfinite(wind_speed) or wind_speed < 0:
         raise ValueError("Wind speed cannot be negative.")
+
+    reference = request.form.get("wind_reference", "magnetic")
+    conversion_steps = []
+    if reference == "true":
+        variation = optional_number("magnetic_variation_deg")
+        variation_direction = request.form.get("variation_direction", "east")
+        if variation is None or not math.isfinite(variation) or not 0 <= variation <= 180:
+            raise ValueError("Enter airport magnetic variation from 0 to 180 degrees for True wind.")
+        if variation_direction not in ("east", "west"):
+            raise ValueError("Magnetic variation direction must be east or west.")
+        true_direction = wind_direction
+        signed_variation = variation if variation_direction == "east" else -variation
+        wind_direction = (true_direction - signed_variation) % 360
+        operator = "-" if variation_direction == "east" else "+"
+        conversion_steps.append({
+            "title": "True to magnetic wind direction",
+            "formula": "Magnetic = True - East variation, or True + West variation (mod 360)",
+            "value": (
+                f"({true_direction:.1f} T {operator} {variation:.1f} "
+                f"{variation_direction.upper()}) mod 360 = {wind_direction:.1f} M"
+            ),
+        })
+    elif reference == "magnetic":
+        conversion_steps.append({
+            "title": "Wind direction reference",
+            "formula": "Wind and runway use magnetic north",
+            "value": f"Wind {wind_direction:.1f} M; no conversion required",
+        })
+    else:
+        raise ValueError("Wind reference must be true or magnetic.")
 
     wind_angle = abs((wind_direction - runway_heading + 180) % 360 - 180)
     headwind_component = wind_speed * math.cos(math.radians(wind_angle))
@@ -71,11 +101,12 @@ def wind_values_from_form():
             "formula": "Runway number x 10 = runway magnetic heading",
             "value": runway_note,
         },
+        *conversion_steps,
         {
             "title": "Wind component",
             "formula": "Angle = smallest difference between wind direction and runway heading",
             "value": (
-                f"|{wind_direction:.1f} - {runway_heading:.1f}| = "
+                f"Wind {wind_direction:.1f} M, runway {runway_heading:.1f} M: smallest angle = "
                 f"{wind_angle:.1f} degrees"
             ),
         },
@@ -130,7 +161,10 @@ def index():
 
 @app.post("/api/takeoff")
 def api_takeoff():
-    wind = wind_values_from_form()
+    try:
+        wind = wind_values_from_form()
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
     return api_response(lambda: takeoff_distance(
         weight_lbs=number_value("weight_lbs"),
         pressure_altitude_ft=number_value("pressure_altitude_ft"),
@@ -145,7 +179,10 @@ def api_takeoff():
 
 @app.post("/api/landing")
 def api_landing():
-    wind = wind_values_from_form()
+    try:
+        wind = wind_values_from_form()
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
     return api_response(lambda: landing_distance(
         pressure_altitude_ft=number_value("pressure_altitude_ft"),
         oat_c=number_value("oat_c"),

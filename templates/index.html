@@ -39,6 +39,9 @@
           <label><span data-i18n="runway">Runway</span><small>RWY</small><input name="runway_heading_deg" type="number" step="1" min="1" max="36" placeholder="23"></label>
           <label><span data-i18n="windDirection">Wind direction</span><small>deg</small><input name="wind_direction_deg" type="number" step="1" min="0" max="360" placeholder="230"></label>
           <label><span data-i18n="windSpeed">Wind speed</span><small>kt</small><input name="wind_speed_kt" type="number" step="0.1" min="0" placeholder="12"></label>
+          <label><span data-i18n="windReference">Wind reference</span><select name="wind_reference"><option value="true" data-i18n="trueWind">True (METAR)</option><option value="magnetic" data-i18n="magneticWind">Magnetic</option></select></label>
+          <label data-variation><span data-i18n="magneticVariation">Airport magnetic variation</span><small>deg</small><input name="magnetic_variation_deg" type="number" step="0.1" min="0" max="180" placeholder="15.0"></label>
+          <label data-variation><span data-i18n="variationDirection">Variation direction</span><select name="variation_direction"><option value="east" data-i18n="eastVariation">East (subtract)</option><option value="west" data-i18n="westVariation">West (add)</option></select></label>
           <label class="check"><input name="grass" type="checkbox"><span data-i18n="grassRunway">Grass runway</span></label>
         </div>
         <button class="primary" type="submit" data-i18n="calculateTakeoff">Calculate takeoff distance</button>
@@ -55,6 +58,9 @@
           <label><span data-i18n="runway">Runway</span><small>RWY</small><input name="runway_heading_deg" type="number" step="1" min="1" max="36" placeholder="23"></label>
           <label><span data-i18n="windDirection">Wind direction</span><small>deg</small><input name="wind_direction_deg" type="number" step="1" min="0" max="360" placeholder="230"></label>
           <label><span data-i18n="windSpeed">Wind speed</span><small>kt</small><input name="wind_speed_kt" type="number" step="0.1" min="0" placeholder="12"></label>
+          <label><span data-i18n="windReference">Wind reference</span><select name="wind_reference"><option value="true" data-i18n="trueWind">True (METAR)</option><option value="magnetic" data-i18n="magneticWind">Magnetic</option></select></label>
+          <label data-variation><span data-i18n="magneticVariation">Airport magnetic variation</span><small>deg</small><input name="magnetic_variation_deg" type="number" step="0.1" min="0" max="180" placeholder="15.0"></label>
+          <label data-variation><span data-i18n="variationDirection">Variation direction</span><select name="variation_direction"><option value="east" data-i18n="eastVariation">East (subtract)</option><option value="west" data-i18n="westVariation">West (add)</option></select></label>
           <label class="check"><input name="grass" type="checkbox"><span data-i18n="grassRunway">Grass runway</span></label>
         </div>
         <button class="primary" type="submit" data-i18n="calculateLanding">Calculate landing distance</button>
@@ -143,7 +149,10 @@
         weight: "Weight", pressureAltitude: "Pressure altitude", oat: "Outside air temp", seaLevelOat: "Sea-level OAT",
         lowerOatAltitude: "Lower OAT altitude", lowerOat: "Lower altitude OAT", upperOatAltitude: "Upper OAT altitude", upperOat: "Upper altitude OAT",
         targetAltitude: "Target altitude",
-        runway: "Runway", windDirection: "Wind direction", windSpeed: "Wind speed",
+        runway: "Runway (magnetic)", windDirection: "Wind direction", windSpeed: "Wind speed",
+        windReference: "Wind reference", trueWind: "True (METAR)", magneticWind: "Magnetic",
+        magneticVariation: "Airport magnetic variation", variationDirection: "Variation direction",
+        eastVariation: "East (subtract)", westVariation: "West (add)",
         grassRunway: "Grass runway", engineSpeed: "engine speed",
         calculateTakeoff: "Calculate takeoff distance", calculateLanding: "Calculate landing distance", calculateCruise: "Calculate cruise performance", calculateClimb: "Calculate climb performance", calculateWeightBalance: "Calculate weight and balance",
         calculating: "Calculating...", resultHint: "Enter conditions and calculate. Results will appear here.", stepsTitle: "Calculation steps",
@@ -165,7 +174,10 @@
         weight: "\u91cd\u91cf", pressureAltitude: "\u538b\u529b\u9ad8\u5ea6", oat: "\u5916\u754c\u6e29\u5ea6", seaLevelOat: "\u6d77\u5e73\u9762\u6e29\u5ea6",
         lowerOatAltitude: "\u4f4e\u70b9 OAT \u9ad8\u5ea6", lowerOat: "\u4f4e\u70b9 OAT", upperOatAltitude: "\u9ad8\u70b9 OAT \u9ad8\u5ea6", upperOat: "\u9ad8\u70b9 OAT",
         targetAltitude: "\u76ee\u6807\u9ad8\u5ea6",
-        runway: "\u8dd1\u9053", windDirection: "\u98ce\u5411", windSpeed: "\u98ce\u901f",
+        runway: "\u8dd1\u9053\uff08\u78c1\u5317\uff09", windDirection: "\u98ce\u5411", windSpeed: "\u98ce\u901f",
+        windReference: "\u98ce\u5411\u57fa\u51c6", trueWind: "\u771f\u5317 (METAR)", magneticWind: "\u78c1\u5317",
+        magneticVariation: "\u673a\u573a\u78c1\u5dee", variationDirection: "\u78c1\u5dee\u65b9\u5411",
+        eastVariation: "\u4e1c\u5dee\uff08\u51cf\uff09", westVariation: "\u897f\u5dee\uff08\u52a0\uff09",
         grassRunway: "\u8349\u5730\u8dd1\u9053", engineSpeed: "\u53d1\u52a8\u673a\u8f6c\u901f",
         calculateTakeoff: "\u8ba1\u7b97\u8d77\u98de\u8ddd\u79bb", calculateLanding: "\u8ba1\u7b97\u964d\u843d\u8ddd\u79bb", calculateCruise: "\u8ba1\u7b97\u5de1\u822a\u6027\u80fd", calculateClimb: "\u8ba1\u7b97\u722c\u5347\u6027\u80fd", calculateWeightBalance: "\u8ba1\u7b97\u91cd\u91cf\u4e0e\u5e73\u8861",
         calculating: "\u8ba1\u7b97\u4e2d...", resultHint: "\u8f93\u5165\u6761\u4ef6\u540e\u70b9\u51fb\u8ba1\u7b97\uff0c\u7ed3\u679c\u4f1a\u663e\u793a\u5728\u8fd9\u91cc\u3002", stepsTitle: "\u8ba1\u7b97\u6b65\u9aa4",
@@ -380,6 +392,20 @@
       });
     });
     document.querySelectorAll(".calculator").forEach(function(form) {
+      const reference = form.querySelector('[name="wind_reference"]');
+      if (reference) {
+        const variation = form.querySelector('[name="magnetic_variation_deg"]');
+        function updateWindReference() {
+          const isTrue = reference.value === "true";
+          form.querySelectorAll("[data-variation]").forEach(function(label) { label.hidden = !isTrue; });
+          variation.required = isTrue && ["runway_heading_deg", "wind_direction_deg", "wind_speed_kt"].every(function(name) {
+            return form.elements[name].value !== "";
+          });
+        }
+        form.addEventListener("input", updateWindReference);
+        reference.addEventListener("change", updateWindReference);
+        updateWindReference();
+      }
       form.addEventListener("submit", async function(event) {
         event.preventDefault();
         const resultBox = form.parentElement.querySelector(".result");
