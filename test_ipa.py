@@ -53,6 +53,18 @@ class PackageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Offline resource missing"):
             validate_app(self.app)
 
+    def test_native_app_requires_data_and_rejects_runtime_files(self):
+        self.info["PPLNative"] = True
+        self.info["PPLOffline"] = True
+        self.save_info()
+        with self.assertRaisesRegex(ValueError, "Native POH data"):
+            validate_app(self.app)
+        (self.app / "NativeData.json").write_text("{}")
+        validate_app(self.app)
+        (self.app / "legacy.wasm").write_bytes(b"not allowed")
+        with self.assertRaisesRegex(ValueError, "runtime"):
+            validate_app(self.app)
+
     def test_arm64_simulator_binary_rejected(self):
         self.binary(platform=7)
         with self.assertRaisesRegex(ValueError, "iOS device"):

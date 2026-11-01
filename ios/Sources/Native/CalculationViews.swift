@@ -58,7 +58,7 @@ struct NumberRow: View {
 struct AircraftSelection: View {
     @EnvironmentObject var store: NativeStore
     var body: some View {
-        Picker(store.label("Aircraft", "飞机"), selection: Binding(get: { store.activeID }, set: store.select)) {
+        Picker(store.label("Aircraft", "飞机"), selection: Binding(get: { store.activeID }, set: { store.select($0) })) {
             Text("C172N — Demo").tag("demo")
             ForEach(Array(store.profiles.enumerated()), id: \.offset) { _, profile in
                 Text(profile["registration"].text + " / " + profile["name"].text).tag(profile["id"].text)

@@ -1,5 +1,14 @@
 # GitHub 打包与 AltStore 安装
 
+## Swift 原生版
+
+当前重写分支为 `codex/swift-native`，工作流名称是 **Native Swift IPA for AltStore**。
+界面为 SwiftUI，计算为 Swift，IPA 内不再包含网页、Python 或 WebAssembly。
+更新旧版 App 前，请先在旧版导出飞机档案 JSON；原生版不会自动读取旧 WebView 的存储。
+安装后在“飞机档案”导入备份并核对本机数据。参见 [原生版说明](NATIVE.md)。
+
+以下为旧 WebView 分支的操作说明，安装产物仍通过 AltStore Classic 签名。
+
 适用分支：`codex/ios-iphone-support`。离线版要求 iOS 26 及以上，面向普通 iPhone、Pro／Pro Max，以及可变窗口尺寸和展开布局；不再要求兼容 SE 或老款 iPhone 5。
 折叠／展开按实际窗口尺寸变化处理，不写死未经确认的机型尺寸。目前没有折叠屏真机验收，不能视为某个具体型号的兼容认证。
 

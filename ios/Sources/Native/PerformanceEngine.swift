@@ -135,7 +135,9 @@ struct NativeEngine {
             if !builtin { steps.append(step) }
         }
         if let cross = wind.cross { values["crosswind_component_kt"] = cross }
-        if builtin { values = values.mapValues(rounded1) }
+        if builtin {
+            for key in Array(values.keys) where key != "input_weight_lbs" { values[key] = rounded1(values[key]!) }
+        }
         return Calculation(result: .numbers(values), steps: steps)
     }
 

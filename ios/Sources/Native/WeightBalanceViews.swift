@@ -16,31 +16,9 @@ struct WeightBalanceView: View {
         ScrollViewReader { proxy in
             Form {
                 Section { AircraftSelection() }
-                Section(store.label("Empty aircraft", "空机数据")) {
-                    LabeledContent(fieldName("empty_weight_lb", chinese: store.chinese), value: wb["empty_weight_lb"].double.map { n($0) + " lb" } ?? "—")
-                    LabeledContent(fieldName("empty_moment_lb_in", chinese: store.chinese), value: wb["empty_moment_lb_in"].double.map { n($0) + " lb-in" } ?? "—")
-                    if let weight = wb["empty_weight_lb"].double, let moment = wb["empty_moment_lb_in"].double, weight > 0 {
-                        LabeledContent(store.label("Empty CG", "空机重心"), value: n(moment / weight) + " in")
-                    }
-                }
-                Section(store.label("Occupants and baggage", "乘员与行李")) {
-                    ForEach(Array(wb["stations"].array.enumerated()), id: \.offset) { _, station in
-                        VStack(alignment: .leading, spacing: 4) {
-                            NumberRow(title: station["label"].text, unit: "lb", id: station["key"].text,
-                                      text: station["enabled"].flag ? binding(station["key"].text) : .constant("0"))
-                                .disabled(!station["enabled"].flag).focused($keyboard)
-                            Text((store.label("Arm: ", "力臂：")) + (station["arm_in"].double.map { n($0) } ?? "—") + " in")
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                Section(store.label("Fuel", "燃油")) {
-                    NumberRow(title: store.label("Fuel on board", "机上燃油"), unit: "US gal", id: "fuel_gal", text: binding("fuel_gal")).focused($keyboard)
-                    NumberRow(title: store.label("Taxi fuel", "滑行用油"), unit: "US gal", id: "taxi_fuel_gal", text: binding("taxi_fuel_gal")).focused($keyboard)
-                    NumberRow(title: store.label("Trip fuel", "航程用油"), unit: "US gal", id: "trip_fuel_gal", text: binding("trip_fuel_gal")).focused($keyboard)
-                    LabeledContent(fieldName("fuel_arm_in", chinese: store.chinese), value: wb["fuel_arm_in"].double.map { n($0) + " in" } ?? "—")
-                    LabeledContent(fieldName("fuel_density_lb_gal", chinese: store.chinese), value: wb["fuel_density_lb_gal"].double.map { n($0) + " lb/US gal" } ?? "—")
-                }
+                emptySection
+                stationsSection
+                fuelSection
                 Section {
                     Button {
                         keyboard = false
@@ -55,23 +33,7 @@ struct WeightBalanceView: View {
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
                 if let calculation {
-                    Section(store.label("Envelope check", "包线检查")) {
-                        ForEach(Array(calculation.result["envelope"].array.enumerated()), id: \.offset) { index, phase in
-                            DisclosureGroup {
-                                Text(phase["message"].text).foregroundStyle(phase["status"].text == "OK" ? .secondary : .red)
-                                Text(calculation.result["explanations"][index]["lines"].array.map(\.text).joined(separator: "\n"))
-                                    .font(.system(.body, design: .monospaced)).textSelection(.enabled)
-                            } label: {
-                                HStack {
-                                    Image(systemName: phase["status"].text == "OK" ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                                        .foregroundStyle(phase["status"].text == "OK" ? .green : .red)
-                                    Text(phase["phase"].text)
-                                    Spacer()
-                                    Text(n(phase["weight"].double!) + " lb / " + n(phase["cg"].double!) + " in").monospacedDigit().font(.subheadline)
-                                }
-                            }
-                        }
-                    }.id("wb-result").accessibilityIdentifier("wb-envelope")
+                    WBEnvelopeSection(calculation: calculation).id("wb-result")
                     Section("CG envelope / 重心包线") { CGPlot(plot: calculation.result["plot"]).frame(height: 310) }
                     Section(store.label("Calculation table", "计算表")) { LoadingTable(rows: calculation.result["rows"].array) }
                     StepsSection(steps: calculation.steps)
@@ -82,6 +44,71 @@ struct WeightBalanceView: View {
         .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button(store.label("Done", "完成")) { keyboard = false } } }
         .onChange(of: store.activeID) { _, _ in calculation = nil; error = nil }
         .onChange(of: store.activeProfile) { _, _ in calculation = nil; error = nil }
+    }
+    private func fixed(_ key: String, unit: String) -> String { wb[key].double.map { n($0) + " " + unit } ?? "—" }
+    private var emptySection: some View {
+        Section(store.label("Empty aircraft", "空机数据")) {
+            LabeledContent(fieldName("empty_weight_lb", chinese: store.chinese), value: fixed("empty_weight_lb", unit: "lb"))
+            LabeledContent(fieldName("empty_moment_lb_in", chinese: store.chinese), value: fixed("empty_moment_lb_in", unit: "lb-in"))
+            if let weight = wb["empty_weight_lb"].double, let moment = wb["empty_moment_lb_in"].double, weight > 0 {
+                LabeledContent(store.label("Empty CG", "空机重心"), value: n(moment / weight) + " in")
+            }
+        }
+    }
+    private var stationsSection: some View {
+        Section(store.label("Occupants and baggage", "乘员与行李")) {
+            ForEach(Array(wb["stations"].array.enumerated()), id: \.offset) { _, station in
+                VStack(alignment: .leading, spacing: 4) {
+                    NumberRow(title: station["label"].text, unit: "lb", id: station["key"].text,
+                              text: station["enabled"].flag ? binding(station["key"].text) : .constant("0"))
+                        .disabled(!station["enabled"].flag).focused($keyboard)
+                    Text(store.label("Arm: ", "力臂：") + (station["arm_in"].double.map(n) ?? "—") + " in")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+    private var fuelSection: some View {
+        Section(store.label("Fuel", "燃油")) {
+            NumberRow(title: store.label("Fuel on board", "机上燃油"), unit: "US gal", id: "fuel_gal", text: binding("fuel_gal")).focused($keyboard)
+            NumberRow(title: store.label("Taxi fuel", "滑行用油"), unit: "US gal", id: "taxi_fuel_gal", text: binding("taxi_fuel_gal")).focused($keyboard)
+            NumberRow(title: store.label("Trip fuel", "航程用油"), unit: "US gal", id: "trip_fuel_gal", text: binding("trip_fuel_gal")).focused($keyboard)
+            LabeledContent(fieldName("fuel_arm_in", chinese: store.chinese), value: fixed("fuel_arm_in", unit: "in"))
+            LabeledContent(fieldName("fuel_density_lb_gal", chinese: store.chinese), value: fixed("fuel_density_lb_gal", unit: "lb/US gal"))
+        }
+    }
+}
+
+@MainActor
+struct WBEnvelopeSection: View {
+    @EnvironmentObject var store: NativeStore
+    var calculation: Calculation
+    var body: some View {
+        Section(store.label("Envelope check", "包线检查")) {
+            ForEach(Array(calculation.result["envelope"].array.enumerated()), id: \.offset) { index, phase in
+                WBPhaseRow(phase: phase, explanation: calculation.result["explanations"][index])
+            }
+        }.accessibilityIdentifier("wb-envelope")
+    }
+}
+
+struct WBPhaseRow: View {
+    var phase: J
+    var explanation: J
+    private var valid: Bool { phase["status"].text == "OK" }
+    var body: some View {
+        DisclosureGroup {
+            Text(phase["message"].text).foregroundStyle(valid ? Color.secondary : Color.red)
+            Text(explanation["lines"].array.map(\.text).joined(separator: "\n"))
+                .font(.system(.body, design: .monospaced)).textSelection(.enabled)
+        } label: {
+            HStack {
+                Image(systemName: valid ? "checkmark.circle.fill" : "exclamationmark.triangle.fill").foregroundStyle(valid ? Color.green : Color.red)
+                Text(phase["phase"].text)
+                Spacer()
+                Text(n(phase["weight"].double!) + " lb / " + n(phase["cg"].double!) + " in").monospacedDigit().font(.subheadline)
+            }
+        }
     }
 }
 

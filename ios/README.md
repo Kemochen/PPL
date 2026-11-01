@@ -1,5 +1,13 @@
 # PPL for iPhone / iPad
 
+## Current Native Branch
+
+`codex/swift-native` is the SwiftUI / Swift rewrite. It does not package a
+WebView or Python runtime. See [native architecture, migration and build guide](NATIVE.md).
+
+The material below describes the **previous WebView-based branch**
+(`codex/ios-iphone-support`), retained as historical implementation notes.
+
 [Chinese AltStore build and installation guide](ALTSTORE.zh-CN.md)
 
 ## Status

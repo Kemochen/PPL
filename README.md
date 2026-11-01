@@ -2,6 +2,14 @@
 
 ## iOS Branch
 
+The current native rewrite is `codex/swift-native`: **SwiftUI interface and Swift
+calculations**, with no WebView/Python/WASM in the IPA. See [native app guide](ios/NATIVE.md).
+Export a JSON backup before replacing the older WebView app; native storage does
+not automatically import WebView localStorage. Its GitHub workflow is
+**Native Swift IPA for AltStore**.
+
+The following notes describe the earlier `codex/ios-iphone-support` build:
+
 The `codex/ios-iphone-support` branch adds an iOS 26+ offline calculator with
 adaptive layouts for ordinary iPhones, Pro/Pro Max, landscape and expanded windows.
 See [iOS setup and build status](ios/README.md). Python,
