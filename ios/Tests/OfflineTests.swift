@@ -29,8 +29,14 @@ final class OfflineTests: XCTestCase {
 
     @MainActor
     func testBundledWebKitStartsAndCalculatesWithoutServer() async throws {
-        let app = try XCTUnwrap(UIApplication.shared.delegate as? AppDelegate)
-        let nav = try XCTUnwrap(app.window?.rootViewController as? UINavigationController)
+        var hostWindow: UIWindow?
+        for _ in 0..<100 {
+            hostWindow = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+                .flatMap { $0.windows }.first { $0.isKeyWindow }
+            if hostWindow != nil { break }
+            try await Task.sleep(nanoseconds: 100_000_000)
+        }
+        let nav = try XCTUnwrap(hostWindow?.rootViewController as? UINavigationController)
         let controller = try XCTUnwrap(nav.viewControllers.first as? CalculatorController)
         controller.loadViewIfNeeded()
         let webView = try XCTUnwrap(controller.webView)

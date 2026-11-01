@@ -2,15 +2,17 @@
 
 ## iOS Branch
 
-The `codex/ios-iphone-support` branch adds an iOS 16.4+ offline calculator and
-small-screen layouts. See [iOS setup and build status](ios/README.md). Python,
+The `codex/ios-iphone-support` branch adds an iOS 26+ offline calculator with
+adaptive layouts for ordinary iPhones, Pro/Pro Max, landscape and expanded windows.
+See [iOS setup and build status](ios/README.md). Python,
 NumPy, calculation tables and UI assets are bundled in the IPA. There is no
 server, HTTPS configuration or first-launch network download. The Mac CI workflow
 builds **PPL-AltStore.ipa** for **AltStore Classic** to re-sign and install with your
 own Apple account. No Apple signing secrets or paid membership are needed by CI.
 The device bundle, Mach-O architecture and ZIP are checked before packaging.
 Offline cold-start, persistence and website-parity browser checks are included.
-Actual Mac compilation and real-device installation still need verification.
+Check the corresponding Actions run for Mac build/native-test results. Actual
+AltStore installation and specific folding hardware still need device validation.
 Pushing iOS changes on this branch triggers the Mac build; manual runs also
 require the workflow file to be registered on the repository's default branch.
 

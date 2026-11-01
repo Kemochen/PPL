@@ -2,7 +2,7 @@ name: PPL
 options:
   bundleIdPrefix: com.pplcalculator
   deploymentTarget:
-    iOS: "16.4"
+    iOS: "26.0"
 settings:
   base:
     SWIFT_VERSION: "5.0"
@@ -29,6 +29,12 @@ targets:
         LSRequiresIPhoneOS: true
         UIRequiredDeviceCapabilities: [arm64]
         UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default Configuration
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft

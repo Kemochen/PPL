@@ -9,7 +9,7 @@ const mime = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', 
 (async () => {
  const browser = await chromium.launch({headless:true,...(process.env.PPL_CHROME ? {executablePath:process.env.PPL_CHROME}: {})});
  try {
-  const context = await browser.newContext({viewport:{width:320,height:568},offline:true});
+  const context = await browser.newContext({viewport:{width:440,height:956},offline:true});
   const external = [], errors=[];
   await context.route('**/*', async route => {
    const url=new URL(route.request().url());
@@ -50,6 +50,15 @@ const mime = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', 
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1),phase);
   }
   await page.evaluate(()=>window.pplPlatform.download('offline backup','test.json','application/json'));
+  const calculation = await page.locator('#takeoff .result').getAttribute('data-last-result');
+  for (const [width,height] of [[390,844],[440,956],[844,390],[720,960],[960,720],[1024,900],[440,956]]) {
+   await page.setViewportSize({width,height});
+   for (const phase of ['takeoff','landing','cruise','climb','weight-balance','aircraft']) {
+    await page.locator(`[data-tab="${phase}"]`).click();
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+1),`resize ${width} ${height} ${phase}`);
+   }
+   assert.equal(await page.locator('#takeoff .result').getAttribute('data-last-result'),calculation,'resizing must not clear results');
+  }
   await page.locator('[data-tab="aircraft"]').click();
   await page.locator('#aircraft-editor [name="name"]').fill('Offline persistence check');
   await page.locator('#aircraft-editor').evaluate(form=>form.requestSubmit());
@@ -63,8 +72,8 @@ const mime = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', 
   await page.locator('#takeoff form').evaluate(form=>form.requestSubmit());
   await page.locator('#takeoff .metric').first().waitFor();
   await page.evaluate(()=>scrollTo(0,0));
-  await page.screenshot({path:path.resolve(__dirname,'ios/build/offline-320.png')});
+  await page.screenshot({path:path.resolve(__dirname,'ios/build/offline-iphone.png')});
   assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
-  console.log(`PASS: offline first launch and reload, ${cases.length} website parity cases, 5 calculator UIs, persisted profiles; zero external requests.`);
+  console.log(`PASS: offline first launch and reload, ${cases.length} website parity cases, 5 calculator UIs, phone/expanded-window resizing, persisted profiles; zero external requests.`);
  } finally {await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

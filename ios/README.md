@@ -4,16 +4,21 @@
 
 ## Status
 
-This branch contains an iOS 16.4+ offline UIKit/WKWebView calculator. Small portrait
-layouts (including a 320-point preview), standard iPhones, landscape and iPads
-are layout targets. The app bundles the existing Python calculation modules,
+This branch contains an iOS 26+ offline UIKit/WKWebView calculator. Ordinary
+iPhones, Pro/Pro Max, landscape and expanded/resized windows are layout targets.
+Scene-based lifecycle and safe-area constraints follow the actual window size,
+without hardcoding a device model or speculative foldable dimensions.
+The app bundles the existing Python calculation modules,
 NumPy, a WebAssembly Python runtime and all UI assets. It needs no HTTPS server,
 no local listening server and no first-launch download. The GitHub build produces
-an unsigned device IPA for AltStore Classic to re-sign. No actual Mac compilation
-or real-device installation has been performed from this Windows workspace.
+an unsigned device IPA for AltStore Classic to re-sign. GitHub Actions provides
+Mac compilation and native-test verification; real AltStore installation and
+specific folding hardware still require on-device acceptance testing.
 
-The old 32-bit iPhone 5 / iOS 10 is NOT supported. The requested compatibility
-was clarified as small portrait screens, not that obsolete hardware.
+The user clarified that older SE/iPhone 5 support is not required. iOS 25 and
+earlier are not installation targets. Fold/unfold transitions are covered as
+window-resize scenarios, not a claim of real-device certification for an
+unverified model name or hardware configuration.
 
 ## Fully Local Runtime
 
@@ -34,9 +39,8 @@ The app blocks external fetches and only opens explicitly tapped HTTPS source
 links in the system browser. Those external documents are not offline downloads.
 
 The runtime adds roughly 25 MB of uncompressed resources and needs a short local
-initialization on launch. The minimum iOS target is 16.4 to match the chosen
-runtime's Safari compatibility baseline; a 320-point preview is not a claim of
-support for obsolete hardware limited to iOS 15 or below.
+initialization on launch. The minimum iOS target is 26.0, following the updated
+device requirements; there is no SE-specific layout or simulator requirement.
 
 Aircraft profiles persist on-device in the stable WKWebView origin. Safari and
 the app do NOT share storage. Export JSON from the website and import it in the
@@ -50,8 +54,8 @@ Pushing iOS changes on `codex/ios-iphone-support` triggers it automatically.
 Manual runs are also declared, but GitHub only exposes **Run workflow** after
 the workflow exists on the repository's default branch. Its name is
 **iOS IPA for AltStore**. Running it may consume
-the repository's Actions allowance. This work has not been committed or pushed.
-This workflow has NOT been dispatched from the Windows workspace.
+the repository's Actions allowance. Check the Actions run for the exact commit
+before downloading its IPA; earlier artifacts can have different minimum iOS targets.
 
 The workflow first runs Python/JavaScript checks, then builds an arm64 iPhoneOS
 app on a Mac and runs the native simulator tests. Only successful runs publish
@@ -131,17 +135,18 @@ and generated project files are ignored.
 `npm ci && npx playwright install chromium && npm run test:offline` tests a cold
 start with browser networking disabled and every asset fulfilled from disk. It
 compares all API fields/steps against the website, exercises all five calculator
-UIs, saves a profile and reloads without losing data. `PPL_CHROME` and
+UIs across phone, landscape and expanded-window sizes, checks that resizing
+preserves results, saves a profile and reloads without losing data. `PPL_CHROME` and
 `PPL_PLAYWRIGHT_PATH` may select an existing test browser/package on Windows.
 The Mac workflow also tests actual bundled `WKURLSchemeHandler` startup and a
 calculation in WebKit before publishing the IPA. Browser checks are not a
 substitute for that native test or real AltStore installation.
 
-CI pins Xcode 16.4 and selects the installed iOS 18.6 runtime (preferring iPhone SE).
-It does not select the first device returned by `simctl`: iOS 18.5 has Apple's
-[WebKit overlay loading bug](https://bugs.webkit.org/show_bug.cgi?id=293831), which
-can stop the test bundle before any tests run. This test-runtime choice does not
-raise the app's iOS 16.4 minimum or disable native tests.
+CI pins Xcode 26.2 and the installed iOS 26.2 runtime, preferring Pro Max, then Pro.
+It refuses to silently fall back to an older runtime. The earlier Xcode 16.4 /
+iOS 18.5 test failure involved Apple's [WebKit overlay loading bug](https://bugs.webkit.org/show_bug.cgi?id=293831).
+The new toolchain follows the user's iOS 26+ target rather than disabling tests
+or retaining an older-device compatibility workaround.
 
 References:
 - https://faq.altstore.io/altstore-classic/your-altstore

@@ -1,6 +1,7 @@
 # GitHub 打包与 AltStore 安装
 
-适用分支：`codex/ios-iphone-support`。离线版要求 iOS 16.4 及以上，面向小屏竖屏、普通 iPhone 和 iPad，不支持老款 iPhone 5 的 iOS 10。
+适用分支：`codex/ios-iphone-support`。离线版要求 iOS 26 及以上，面向普通 iPhone、Pro／Pro Max，以及可变窗口尺寸和展开布局；不再要求兼容 SE 或老款 iPhone 5。
+折叠／展开按实际窗口尺寸变化处理，不写死未经确认的机型尺寸。目前没有折叠屏真机验收，不能视为某个具体型号的兼容认证。
 
 ## 你需要准备
 
@@ -50,6 +51,6 @@ Actions 可能消耗仓库的构建额度。产物保留 30 天；当前没有�
 ## 验证状态
 
 Windows 上已禁用浏览器网络，验证首次启动、全部五类计算、与网页版的结果一致性、保存档案和重开后的持久化，且无外部资源请求。
-真实的 iOS 二进制仍需 Mac/Xcode 编译。GitHub 工作流会验证 App 内自定义资源加载和 WebKit 离线运算；当前尚未运行该云端构建，也尚未通过 AltStore 在真机上验收。
+GitHub 工作流验证 Mac 编译、App 内资源加载和 WebKit 离线运算。请查看对应提交的 Actions 记录再下载 IPA；旧构建的最低系统要求可能不同。AltStore 安装和具体折叠机型仍需真机验收。
 
 官方说明：[AltStore Classic](https://faq.altstore.io/altstore-classic/your-altstore)、[Classic 与 PAL 的区别](https://github.com/altstoreio/FAQ/blob/main/altstore-pal-v.-altstore-classic.md)。
