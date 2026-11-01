@@ -137,6 +137,12 @@ The Mac workflow also tests actual bundled `WKURLSchemeHandler` startup and a
 calculation in WebKit before publishing the IPA. Browser checks are not a
 substitute for that native test or real AltStore installation.
 
+CI pins Xcode 16.4 and selects the installed iOS 18.6 runtime (preferring iPhone SE).
+It does not select the first device returned by `simctl`: iOS 18.5 has Apple's
+[WebKit overlay loading bug](https://bugs.webkit.org/show_bug.cgi?id=293831), which
+can stop the test bundle before any tests run. This test-runtime choice does not
+raise the app's iOS 16.4 minimum or disable native tests.
+
 References:
 - https://faq.altstore.io/altstore-classic/your-altstore
 - https://github.com/altstoreio/FAQ/blob/main/altstore-pal-v.-altstore-classic.md

@@ -39,6 +39,8 @@ jobs:
     needs: checks
     runs-on: macos-15
     timeout-minutes: 30
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -50,18 +52,7 @@ jobs:
       - name: Build device IPA for AltStore re-signing
         run: bash ios/build.sh altstore
       - name: Select available iPhone simulator
-        run: |
-          xcrun simctl list devices available -j > "$RUNNER_TEMP/simulators.json"
-          python3 - <<'PY'
-          import json, os
-          with open(os.environ['RUNNER_TEMP'] + '/simulators.json') as handle:
-              runtimes = json.load(handle)['devices']
-          devices = [d for runtime, group in runtimes.items() if 'iOS' in runtime for d in group if d['name'].startswith('iPhone')]
-          if not devices:
-              raise SystemExit('No available iPhone simulator')
-          with open(os.environ['GITHUB_ENV'], 'a') as handle:
-              handle.write('SIMULATOR_ID=' + devices[0]['udid'] + '\n')
-          PY
+        run: python ios/select_simulator.py
       - name: Test bundled offline startup and calculations
         run: >-
           xcodebuild -project ios/PPL.xcodeproj -scheme PPL
