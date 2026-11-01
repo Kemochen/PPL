@@ -56,7 +56,12 @@ def validate_app(app):
         offset += length
     if not device:
         raise ValueError("Missing iOS device build command")
-    if info.get("PPLOffline") is True:
+    if info.get("PPLNative") is True:
+        if not (app / "NativeData.json").is_file():
+            raise ValueError("Native POH data is missing")
+        if any(path.suffix in (".py", ".pyc", ".wasm", ".whl", ".html", ".js") for path in app.rglob("*")):
+            raise ValueError("Native app unexpectedly contains a Python / Web runtime")
+    elif info.get("PPLOffline") is True:
         for resource in ("index.html", "bootstrap.js", "engine.zip", "manifest.json", "static/styles.css",
                          "static/platform.js", "static/performance.js", "static/aircraft.js",
                          "runtime/pyodide.js", "runtime/pyodide.asm.js", "runtime/pyodide.asm.wasm",
@@ -96,6 +101,7 @@ def package_app(app, output):
             "version": info.get("CFBundleShortVersionString"), "build": info.get("CFBundleVersion"),
             "minimum_ios": info.get("MinimumOSVersion"), "sha256": digest,
             "offline": info.get("PPLOffline", False),
+            "native_swift": info.get("PPLNative", False),
             "signing": "Unsigned; re-sign using AltStore Classic before installation"}
 
 

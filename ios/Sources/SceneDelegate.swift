@@ -1,4 +1,5 @@
 import UIKit
+import SwiftUI
 
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -7,7 +8,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = UINavigationController(rootViewController: CalculatorController())
+        window.rootViewController = UIHostingController(rootView: NativeRootView())
         window.makeKeyAndVisible()
         self.window = window
     }

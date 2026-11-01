@@ -18,14 +18,12 @@ targets:
       - path: Sources
       - path: Resources
         buildPhase: resources
-      - path: BundledWeb
-        type: folder
-        buildPhase: resources
     info:
       path: Info.plist
       properties:
         CFBundleDisplayName: PPL
         PPLOffline: true
+        PPLNative: true
         LSRequiresIPhoneOS: true
         UIRequiredDeviceCapabilities: [arm64]
         UILaunchScreen: {}
@@ -59,11 +57,21 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+  PPLNativeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: PPL
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   PPL:
     build:
       targets:
         PPL: all
         PPLTests: [test]
+        PPLNativeUITests: [test]
     test:
-      targets: [PPLTests]
+      targets: [PPLTests, PPLNativeUITests]

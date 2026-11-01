@@ -1,7 +1,7 @@
-name: iOS IPA for AltStore
+name: Native Swift IPA for AltStore
 on:
   push:
-    branches: [codex/ios-iphone-support]
+    branches: [codex/swift-native]
     paths:
       - 'ios/**'
       - '.github/workflows/ios-build.yml'
@@ -30,11 +30,6 @@ jobs:
       - run: pip install -r requirements.txt -r ios/offline-requirements.txt
       - run: python -m unittest discover -p 'test_*.py' -v
       - run: node --test test_mobile.cjs
-      - run: python ios/build_offline.py
-      - run: npm ci --ignore-scripts
-      - run: npx playwright install --with-deps chromium
-      - name: Verify offline cold start and website parity
-        run: npm run test:offline
   ios:
     needs: checks
     runs-on: macos-15
@@ -53,18 +48,26 @@ jobs:
         run: bash ios/build.sh altstore
       - name: Select available iPhone simulator
         run: python ios/select_simulator.py
-      - name: Test bundled offline startup and calculations
+      - name: Test native Swift parity and iPhone interface
         run: >-
           xcodebuild -project ios/PPL.xcodeproj -scheme PPL
           -destination "platform=iOS Simulator,id=$SIMULATOR_ID"
           -derivedDataPath ios/build/Simulator
           -resultBundlePath ios/build/NativeTests.xcresult CODE_SIGNING_ALLOWED=NO test
+      - name: Export native UI screenshots
+        if: ${{ always() }}
+        run: |
+          if [ -d ios/build/NativeTests.xcresult ]; then
+            xcrun xcresulttool export attachments --path ios/build/NativeTests.xcresult --output-path ios/build/screenshots
+          fi
       - name: Native test diagnostics
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: PPL-native-test-results
-          path: ios/build/NativeTests.xcresult
+          path: |
+            ios/build/NativeTests.xcresult
+            ios/build/screenshots
           if-no-files-found: ignore
           retention-days: 7
       - uses: actions/upload-artifact@v4
@@ -81,4 +84,4 @@ jobs:
         run: |
           echo '## PPL for AltStore Classic' >> "$GITHUB_STEP_SUMMARY"
           echo 'Download the PPL-AltStore artifact, extract the ZIP and import PPL-AltStore.ipa into AltStore Classic. No Apple signing secrets are used by this workflow.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Requires iOS 26+. All calculators and profiles run offline, including first launch. No HTTPS server is needed. Layout adapts to portrait, landscape and window resizing. This is not a TestFlight/App Store upload.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Native SwiftUI + Swift calculations, iOS 26+. No Python, WebView or server in the IPA. Import a JSON backup to transfer profiles from the previous WebView app.' >> "$GITHUB_STEP_SUMMARY"

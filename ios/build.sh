@@ -7,7 +7,7 @@ if [[ "$(uname -s)" != Darwin ]]; then
 fi
 command -v xcodegen >/dev/null || { echo "Install XcodeGen: brew install xcodegen" >&2; exit 1; }
 xcodebuild -version
-python3 build_offline.py
+python3 export_native_data.py
 xcodegen generate
 mode="${1:-altstore}"
 case "$mode" in

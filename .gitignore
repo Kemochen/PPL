@@ -8,3 +8,4 @@ ios/Info.plist
 *.xcuserstate
 xcuserdata/
 node_modules/
+ios/Tests/Fixtures/NativeParity.json
