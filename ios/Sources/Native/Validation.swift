@@ -25,6 +25,7 @@ enum NativeValidation {
         let mode = parsed["mode"].text
         guard ["none", "builtin", "manual", "c172m1974"].contains(mode) else { throw CalculationError("Invalid performance mode.") }
         for key in ["source", "conditions"] {
+            if parsed[key] != .null { guard case .string = parsed[key] else { throw CalculationError("Invalid POH text: " + key) } }
             guard parsed[key].text.count <= 2000 else { throw CalculationError("POH text is too long.") }
             parsed[key] = .string(parsed[key].text.trimmingCharacters(in: .whitespacesAndNewlines))
         }
@@ -37,6 +38,7 @@ enum NativeValidation {
         }
         if parsed["grass_mode"] == .null { parsed["grass_mode"] = .string("none") }
         guard ["none", "ground_add", "both_percent"].contains(parsed["grass_mode"].text) else { throw CalculationError("Invalid grass correction mode.") }
+        if parsed["rows"] != .null { guard case .array = parsed["rows"] else { throw CalculationError("POH rows must be an array") } }
         let rows = parsed["rows"].array
         guard rows.count <= 3000 else { throw CalculationError("At most 3000 POH rows are allowed.") }
         var normalized: [J] = [], seen = Set<[Double]>()
@@ -88,6 +90,7 @@ enum NativeValidation {
         guard let model = catalogue.array.first(where: { $0["id"].text == raw["model_id"].text }) else { throw CalculationError("Choose an aircraft model.") }
         var result = model["template"], issues: [String] = []
         for key in ["id", "name", "registration", "serial_number", "wb_reference", "wb_date", "notes"] {
+            if raw[key] != .null { guard case .string = raw[key] else { throw CalculationError("Invalid aircraft text: " + key) } }
             guard raw[key].text.count <= 2000 else { throw CalculationError("Aircraft text is too long: " + key) }
             result[key] = .string(raw[key].text.trimmingCharacters(in: .whitespacesAndNewlines))
         }
@@ -125,6 +128,7 @@ enum NativeValidation {
             stations.append(station)
         }
         wb["stations"] = .array(stations)
+        if raw["wb"]["cg_limits"] != .null { guard case .array = raw["wb"]["cg_limits"] else { throw CalculationError("CG envelope must be an array") } }
         guard raw["wb"]["cg_limits"].array.count <= 30 else { throw CalculationError("At most 30 CG envelope rows are allowed") }
         var limits: [J] = []
         for row in raw["wb"]["cg_limits"].array {

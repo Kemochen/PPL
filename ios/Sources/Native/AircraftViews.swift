@@ -97,6 +97,10 @@ struct AircraftEditor: View {
                 TextField(store.label("Aircraft name", "飞机名称"), text: binding(["name"]))
                 TextField(store.label("Registration", "注册号"), text: binding(["registration"])).textInputAutocapitalization(.characters)
                 LabeledContent("Model", value: draft["model_id"].text.uppercased())
+                if let model = store.engine?.data["catalogue"].array.first(where: { $0["id"] == draft["model_id"] }),
+                   let url = URL(string: model["source"].text), url.scheme == "https" {
+                    Link(store.label("Model reference", "机型资料来源"), destination: url)
+                }
                 TextField(store.label("Serial number", "序列号"), text: binding(["serial_number"]))
                 number(store.label("Model year", "制造年份"), ["year"], "")
                 TextField(store.label("W&B / POH document reference", "称重记录／POH 来源"), text: binding(["wb_reference"]), axis: .vertical)
@@ -153,10 +157,10 @@ struct AircraftEditor: View {
         .navigationTitle(draft["registration"].text.isEmpty ? store.label("Aircraft draft", "飞机草稿") : draft["registration"].text)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) { Button(store.label("Save", "保存")) {
-                do { keyboard = false; try store.save(draft); dismiss() }
+                do { keyboard = false; endNativeEditing(); try store.save(draft); dismiss() }
                 catch { self.error = error.localizedDescription }
             }.accessibilityIdentifier("save-aircraft") }
-            ToolbarItemGroup(placement: .keyboard) { Spacer(); Button(store.label("Done", "完成")) { keyboard = false } }
+            ToolbarItemGroup(placement: .keyboard) { Spacer(); Button(store.label("Done", "完成")) { keyboard = false; endNativeEditing() } }
         }
         .sheet(item: $copySheet) { sheet in NavigationStack { AircraftEditor(profile: sheet.profile) } }
         .confirmationDialog(store.label("Changing model resets W&B and POH data", "更换机型会重置称重与性能数据"), isPresented: $changingModel, titleVisibility: .visible) {

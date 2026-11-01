@@ -1,4 +1,10 @@
 import SwiftUI
+import UIKit
+
+@MainActor
+func endNativeEditing() {
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+}
 
 func fieldName(_ key: String, chinese: Bool = false) -> String {
     let labels: [String: (String, String)] = [
@@ -8,6 +14,9 @@ func fieldName(_ key: String, chinese: Bool = false) -> String {
         "lower_oat_altitude_ft": ("Lower OAT altitude", "低端温度高度"), "upper_oat_altitude_ft": ("Upper OAT altitude", "高端温度高度"),
         "lower_oat_c": ("Lower altitude OAT", "低端温度"), "upper_oat_c": ("Upper altitude OAT", "高端温度"),
         "ground_roll_ft": ("Ground roll", "地面滑跑"), "total_clear_50ft_ft": ("Over 50 ft", "越过 50 ft"), "total_to_clear_50ft_ft": ("Over 50 ft", "越过 50 ft"),
+        "input_weight_lbs": ("Input weight", "输入重量"), "selected_table_lbs": ("Selected POH weight", "采用的 POH 重量表"),
+        "Pressure altitude ft": ("Pressure altitude", "压力高度"), "OAT at altitude C": ("Interpolated OAT", "插值得到的温度"),
+        "ISA temp at altitude C": ("ISA temperature", "标准温度"), "Temp offset from ISA C": ("ISA offset", "标准温差"),
         "headwind_component_kt": ("Headwind", "逆风分量"), "tailwind_component_kt": ("Tailwind", "顺风分量"), "crosswind_component_kt": ("Crosswind", "侧风分量"),
         "lift_off_kias": ("Lift-off speed", "离地速度"), "at_50ft_kias": ("Speed at 50 ft", "50 ft 速度"), "approach_kias": ("Approach speed", "进近速度"),
         "Percent BHP": ("Power", "功率"), "KTAS": ("True airspeed", "真空速"), "GPH": ("Fuel flow", "耗油率"),
@@ -115,6 +124,9 @@ struct PerformanceView: View {
         ScrollViewReader { proxy in
             Form {
                 Section { AircraftSelection() }
+                if mode == "c172m1974" {
+                    Section { Text(store.engine?.data["reference"][phase.rawValue]["conditions"].text ?? "1974 reference only; verify applicability to this aircraft.").font(.caption).foregroundStyle(.orange) }
+                }
                 Section {
                     Picker(store.label("Calculation", "计算"), selection: $phase) {
                         Text(store.label("Takeoff", "起飞")).tag(Phase.takeoff)
@@ -136,7 +148,7 @@ struct PerformanceView: View {
                 if phase == .takeoff || phase == .landing { windSection }
                 Section {
                     Button {
-                        keyboard = false
+                        keyboard = false; endNativeEditing()
                         do {
                             guard let engine = store.engine else { return }
                             calculation = try engine.calculate(phase.rawValue, form: .object((inputs[phase] ?? [:]).mapValues(J.string)), profile: store.activeProfile)
@@ -156,7 +168,7 @@ struct PerformanceView: View {
         .navigationTitle(store.label(phase.title, ["takeoff": "起飞", "landing": "降落", "cruise": "巡航", "climb": "爬升"][phase.rawValue]!))
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) { Button(store.chinese ? "EN" : "中文") { store.toggleLanguage() } }
-            ToolbarItemGroup(placement: .keyboard) { Spacer(); Button(store.label("Done", "完成")) { keyboard = false } }
+            ToolbarItemGroup(placement: .keyboard) { Spacer(); Button(store.label("Done", "完成")) { keyboard = false; endNativeEditing() } }
         }
         .onChange(of: phase) { _, _ in calculation = nil; error = nil }
         .onChange(of: store.activeID) { _, _ in calculation = nil; error = nil }
@@ -194,8 +206,9 @@ struct MetricSection: View {
             ForEach(keys, id: \.self) { key in
                 LabeledContent(fieldName(key, chinese: store.chinese)) {
                     Text(n(calculation.result[key].double!) + " " + unitFor(key)).monospacedDigit()
-                        .foregroundStyle(.primary).accessibilityIdentifier("metric-" + key)
+                        .foregroundStyle(.primary)
                 }
+                .accessibilityElement(children: .combine).accessibilityIdentifier("metric-" + key)
             }
         }
     }

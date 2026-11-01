@@ -53,7 +53,7 @@ are supplied by iOS. The native branch no longer uses `build_offline.py` or
 
 ## Verification and Limits
 
-- 77 initial numerical parity cases cover interpolation, bounds, wind reference,
+- 122 numerical parity cases cover interpolation, bounds, wind reference,
   grass corrections, FFCT restrictions, manual tables, climb and W&B.
 - Native persistence and CSV/TSV round-trip tests protect backup compatibility.
 - Native UI tests capture portrait/landscape screenshots in the test artifacts.

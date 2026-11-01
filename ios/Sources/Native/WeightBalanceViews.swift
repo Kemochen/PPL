@@ -21,7 +21,7 @@ struct WeightBalanceView: View {
                 fuelSection
                 Section {
                     Button {
-                        keyboard = false
+                        keyboard = false; endNativeEditing()
                         do {
                             var form = J.object(loads.mapValues(J.string))
                             for station in wb["stations"].array where !station["enabled"].flag { form[station["key"].text] = .number(0) }
@@ -34,14 +34,17 @@ struct WeightBalanceView: View {
                 if let error { Section { Text(error).foregroundStyle(.red) } }
                 if let calculation {
                     WBEnvelopeSection(calculation: calculation).id("wb-result")
-                    Section("CG envelope / 重心包线") { CGPlot(plot: calculation.result["plot"]).frame(height: 310) }
+                    Section("CG envelope / 重心包线") {
+                        CGPlot(plot: calculation.result["plot"]).frame(height: 310)
+                            .accessibilityElement().accessibilityLabel("CG envelope").accessibilityIdentifier("cg-plot")
+                    }
                     Section(store.label("Calculation table", "计算表")) { LoadingTable(rows: calculation.result["rows"].array) }
                     StepsSection(steps: calculation.steps)
                 }
             }.onChange(of: token) { _, _ in withAnimation { proxy.scrollTo("wb-result", anchor: .top) } }
         }
         .navigationTitle("Weight & Balance")
-        .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button(store.label("Done", "完成")) { keyboard = false } } }
+        .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button(store.label("Done", "完成")) { keyboard = false; endNativeEditing() } } }
         .onChange(of: store.activeID) { _, _ in calculation = nil; error = nil }
         .onChange(of: store.activeProfile) { _, _ in calculation = nil; error = nil }
     }
@@ -109,6 +112,7 @@ struct WBPhaseRow: View {
                 Text(n(phase["weight"].double!) + " lb / " + n(phase["cg"].double!) + " in").monospacedDigit().font(.subheadline)
             }
         }
+        .accessibilityIdentifier("wb-phase-" + phase["phase"].text)
     }
 }
 

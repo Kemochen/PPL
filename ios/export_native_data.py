@@ -33,6 +33,19 @@ def export():
                 response = client.post("/api/" + phase, data=body)
             samples.append(dict(name=f"{phase} random {index}", path="/api/" + phase, body=body,
                                 expected=dict(status=response.status_code, body=response.get_json())))
+    def add(name, phase, body):
+        with app.test_client() as client:
+            response = client.post("/api/" + phase, data=body)
+        samples.append(dict(name=name, path="/api/" + phase, body=body,
+                            expected=dict(status=response.status_code, body=response.get_json())))
+    for index in range(15):
+        offset = rng.uniform(-15, 15)
+        add(f"cruise random {index}", "cruise", dict(pressure_altitude_ft=str(rng.uniform(2000, 12000)), rpm=str(rng.uniform(2250, 2400)),
+            lower_oat_altitude_ft="2000", lower_oat_c=str(11 + offset), upper_oat_altitude_ft="12000", upper_oat_c=str(-9 + offset)))
+        add(f"climb random {index}", "climb", dict(pressure_altitude_ft=str(rng.uniform(0, 5999)), target_altitude_ft=str(rng.uniform(6001, 12000)), oat_c=str(rng.uniform(-10, 35))))
+        add(f"W&B random {index}", "weight-balance", dict(aircraft_profile=json.dumps(starter_profile()), pilot_weight_lbs=str(rng.uniform(100, 240)),
+            front_passenger_weight_lbs=str(rng.uniform(0, 240)), rear_left_weight_lbs=str(rng.uniform(0, 230)), rear_right_weight_lbs=str(rng.uniform(0, 230)),
+            baggage1_weight_lbs=str(rng.uniform(0, 60)), baggage2_weight_lbs=str(rng.uniform(0, 40)), fuel_gal="35", taxi_fuel_gal="1", trip_fuel_gal="12"))
     target = ROOT / "ios/Tests/Fixtures/NativeParity.json"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(samples, allow_nan=False), encoding="utf-8")

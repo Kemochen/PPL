@@ -37,7 +37,11 @@ extension NativeEngine {
         func load(_ name: String, arm: Double, amount: Double, exactMoment: Double? = nil, kind: String = "load") {
             let m = exactMoment ?? arm * amount
             rows.append(.object(["item": .string(name), "arm": .number(arm), "weight": .number(amount), "moment": .number(m), "cg": .null, "kind": .string(kind)]))
-            steps.append(MathStep(title: "Moment — " + name, formula: "Moment = weight × arm", value: "\(n(amount)) × \(n(arm)) = \(n(m)) lb-in"))
+            if exactMoment != nil {
+                steps.append(MathStep(title: "Empty aircraft record", formula: "Use the recorded empty moment; empty CG = moment ÷ weight", value: "Moment: \(n(m)) lb-in\nCG: \(n(m)) ÷ \(n(amount)) = \(n(arm)) in"))
+            } else {
+                steps.append(MathStep(title: "Moment — " + name, formula: "Moment = weight × arm", value: "\(n(amount)) × \(n(arm)) = \(n(m)) lb-in"))
+            }
         }
         load("Empty Aircraft", arm: moment / weight, amount: weight, exactMoment: moment)
         for station in wb["stations"].array {

@@ -143,7 +143,7 @@ struct POHRowEditor: View {
                 NumberRow(title: key, text: Binding(get: { jsonText(row[key]) }, set: { row[key] = .string($0) })).focused($keyboard)
             }
         }.navigationTitle("POH row \(index + 1)")
-            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { keyboard = false } } }
+            .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { keyboard = false; endNativeEditing() } } }
     }
 }
 
