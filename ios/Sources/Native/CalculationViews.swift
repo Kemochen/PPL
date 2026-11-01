@@ -22,6 +22,10 @@ func fieldName(_ key: String, chinese: Bool = false) -> String {
         "Percent BHP": ("Power", "功率"), "KTAS": ("True airspeed", "真空速"), "GPH": ("Fuel flow", "耗油率"),
         "time_to_climb_min": ("Climb time", "爬升时间"), "distance_to_climb_nm": ("Climb distance", "爬升距离"),
         "fuel_used_gal_climb_only": ("Climb fuel", "爬升用油"), "fuel_used_gal_with_start_taxi_takeoff": ("Fuel incl. start / taxi / takeoff", "含启动、滑行和起飞用油"),
+        "pressure_alt_ft": ("Initial pressure altitude", "起始压力高度"), "target_alt_ft": ("Target altitude", "目标高度"),
+        "standard_oat_at_pressure_alt_c": ("ISA at start", "起始标准温度"),
+        "climb_speed_kias_at_start": ("Initial climb speed", "起始爬升速度"), "climb_speed_kias_at_target": ("Target climb speed", "目标高度爬升速度"),
+        "rate_of_climb_fpm_at_start": ("Initial climb rate", "起始爬升率"), "rate_of_climb_fpm_at_target": ("Target climb rate", "目标高度爬升率"),
         "empty_weight_lb": ("Basic empty weight", "基本空重"), "empty_moment_lb_in": ("Empty moment (full lb-in)", "空机力矩（完整 lb-in）"),
         "fuel_density_lb_gal": ("Fuel density", "燃油密度"), "fuel_arm_in": ("Fuel arm", "燃油力臂"), "usable_fuel_gal": ("Usable fuel", "可用燃油"),
         "max_ramp_lb": ("Maximum ramp weight", "最大停机重量"), "max_takeoff_lb": ("Maximum takeoff weight", "最大起飞重量"),
@@ -210,9 +214,11 @@ struct MetricSection: View {
     var body: some View {
         Section(store.label("Result", "结果")) {
             ForEach(keys, id: \.self) { key in
-                LabeledContent(fieldName(key, chinese: store.chinese)) {
+                LabeledContent {
                     Text(n(calculation.result[key].double!) + " " + unitFor(key)).monospacedDigit()
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(.primary).fixedSize(horizontal: true, vertical: false)
+                } label: {
+                    Text(fieldName(key, chinese: store.chinese)).fixedSize(horizontal: false, vertical: true)
                 }
                 .accessibilityElement(children: .combine).accessibilityIdentifier("metric-" + key)
             }
