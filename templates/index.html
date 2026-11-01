@@ -2,15 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>C172N PPL Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PPL">
+  <meta name="theme-color" content="#146c63">
+  <title>PPL Calculator</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
   <main class="shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Cessna 172N</p>
+        <p class="eyebrow" id="aircraft-heading">Cessna 172N - Demo</p>
         <h1 data-i18n="appTitle">PPL Performance Calculator</h1>
       </div>
       <div class="top-actions">
@@ -22,13 +25,21 @@
       </div>
     </header>
 
+    <div class="aircraft-selector">
+      <label><span data-i18n="activeAircraft">Active aircraft</span><select id="active-aircraft"><option value="demo">C172N - Demo (sample W&amp;B)</option></select></label>
+      <p id="aircraft-context" role="status"></p>
+    </div>
+
     <nav class="tabs" aria-label="Calculator tabs">
       <button class="tab active" type="button" data-tab="takeoff" data-i18n="takeoffTab">Takeoff</button>
       <button class="tab" type="button" data-tab="landing" data-i18n="landingTab">Landing</button>
       <button class="tab" type="button" data-tab="cruise" data-i18n="cruiseTab">Cruise</button>
       <button class="tab" type="button" data-tab="climb" data-i18n="climbTab">Climb</button>
       <button class="tab" type="button" data-tab="weight-balance" data-i18n="weightBalanceTab">W&B</button>
+      <button class="tab" type="button" data-tab="aircraft" data-i18n="aircraftTab">Aircraft</button>
     </nav>
+
+    {% include 'aircraft.html' %}
 
     <section class="panel active" id="takeoff">
       <form class="calculator" data-endpoint="/api/takeoff">
@@ -53,6 +64,7 @@
     <section class="panel" id="landing">
       <form class="calculator" data-endpoint="/api/landing">
         <div class="form-grid">
+          <label id="manual-landing-weight" hidden><span data-i18n="weight">Weight</span><small>lb</small><input name="weight_lbs" type="number" step="any" min="0.1" value="2300" disabled required></label>
           <label><span data-i18n="pressureAltitude">Pressure altitude</span><small>ft</small><input name="pressure_altitude_ft" type="number" step="1" value="2000" required></label>
           <label><span data-i18n="oat">Outside air temp</span><small>C</small><input name="oat_c" type="number" step="0.1" value="20" required></label>
           <label><span data-i18n="runway">Runway</span><small>RWY</small><input name="runway_heading_deg" type="number" step="1" min="1" max="36" placeholder="23"></label>
@@ -103,36 +115,36 @@
         <div class="wb-input-table">
           <div class="wb-head">Item</div>
           <div class="wb-head">Arm (in)</div>
-          <div class="wb-head">Weight / Fuel</div>
+          <div class="wb-head">Weight (lb) / Fuel (US gal)</div>
           <label><span>Basic Empty Weight</span></label>
-          <input name="empty_arm_in" type="number" step="0.1" value="38.2" readonly>
-          <input name="empty_weight_lbs" type="number" step="0.1" value="1541" readonly>
+          <input name="empty_arm_in" data-wb-display type="number" step="any" value="38.2" aria-label="Basic empty arm (in)" readonly>
+          <input name="empty_weight_lbs" data-wb-display type="number" step="any" value="1541" aria-label="Basic empty weight (lb)" readonly>
           <label><span>Pilot</span></label>
-          <input value="40" readonly>
+          <input value="40" data-wb-display readonly>
           <input name="pilot_weight_lbs" type="number" step="0.1" value="180" required>
           <label><span>Front Passenger</span></label>
-          <input value="40" readonly>
+          <input value="40" data-wb-display readonly>
           <input name="front_passenger_weight_lbs" type="number" step="0.1" value="205" required>
           <label><span>Rear Left</span></label>
-          <input value="73" readonly>
+          <input value="73" data-wb-display readonly>
           <input name="rear_left_weight_lbs" type="number" step="0.1" value="205" required>
           <label><span>Rear Right</span></label>
-          <input value="73" readonly>
+          <input value="73" data-wb-display readonly>
           <input name="rear_right_weight_lbs" type="number" step="0.1" value="0" required>
           <label><span>Baggage 1</span></label>
-          <input value="95" readonly>
+          <input value="95" data-wb-display readonly>
           <input name="baggage1_weight_lbs" type="number" step="0.1" value="0" required>
           <label><span>Baggage 2</span></label>
-          <input value="123" readonly>
+          <input name="baggage2_arm_in" data-wb-display type="number" step="any" value="123" aria-label="Baggage 2 arm (in)" readonly>
           <input name="baggage2_weight_lbs" type="number" step="0.1" value="0" required>
           <label><span>Fuel</span><small>gal x 6</small></label>
-          <input value="48" readonly>
+          <input value="48" data-wb-display readonly>
           <input name="fuel_gal" type="number" step="0.1" value="25" required>
           <label><span>Taxi Fuel</span><small>gal x 6</small></label>
-          <input value="48" readonly>
+          <input value="48" data-wb-display readonly>
           <input name="taxi_fuel_gal" type="number" step="0.1" value="1" required>
           <label><span>Trip Fuel</span><small>gal x 6</small></label>
-          <input value="48" readonly>
+          <input value="48" data-wb-display readonly>
           <input name="trip_fuel_gal" type="number" step="0.1" value="12" required>
         </div>
         <button class="primary" type="submit" data-i18n="calculateWeightBalance">Calculate weight and balance</button>
@@ -142,9 +154,11 @@
     </section>
   </main>
 
+  <script src="{{ url_for('static', filename='platform.js') }}"></script>
   <script>
     const translations = {
       en: {
+        aircraftTab: "Aircraft", activeAircraft: "Active aircraft",
         appTitle: "PPL Performance Calculator", takeoffTab: "Takeoff", landingTab: "Landing", cruiseTab: "Cruise", climbTab: "Climb", weightBalanceTab: "W&B",
         weight: "Weight", pressureAltitude: "Pressure altitude", oat: "Outside air temp", seaLevelOat: "Sea-level OAT",
         lowerOatAltitude: "Lower OAT altitude", lowerOat: "Lower altitude OAT", upperOatAltitude: "Upper OAT altitude", upperOat: "Upper altitude OAT",
@@ -160,6 +174,7 @@
         tailwind_component_kt: "Tailwind component", crosswind_component_kt: "Crosswind component", ground_roll_ft: "Ground roll",
         total_clear_50ft_ft: "Total over 50 ft", total_to_clear_50ft_ft: "Total over 50 ft",
         lift_off_kias: "Lift-off speed", at_50ft_kias: "Speed at 50 ft", "Pressure altitude ft": "Pressure altitude",
+        approach_kias: "Approach IAS",
         "ISA temp at altitude C": "ISA temp at altitude", "OAT at altitude C": "OAT at altitude",
         "Temp offset from ISA C": "Temp offset from ISA", "Percent BHP": "Power", KTAS: "True airspeed", GPH: "Fuel flow",
         pressure_alt_ft: "Pressure altitude", target_alt_ft: "Target altitude", oat_c: "OAT",
@@ -170,6 +185,8 @@
         distance_to_climb_nm: "Distance to climb"
       },
       zh: {
+        approach_kias: "\u8fdb\u8fd1\u6307\u793a\u7a7a\u901f",
+        aircraftTab: "\u98de\u673a\u6863\u6848", activeAircraft: "\u5f53\u524d\u98de\u673a",
         appTitle: "PPL \u6027\u80fd\u8ba1\u7b97\u5668", takeoffTab: "\u8d77\u98de", landingTab: "\u964d\u843d", cruiseTab: "\u5de1\u822a", climbTab: "\u722c\u5347", weightBalanceTab: "\u91cd\u91cf\u5e73\u8861",
         weight: "\u91cd\u91cf", pressureAltitude: "\u538b\u529b\u9ad8\u5ea6", oat: "\u5916\u754c\u6e29\u5ea6", seaLevelOat: "\u6d77\u5e73\u9762\u6e29\u5ea6",
         lowerOatAltitude: "\u4f4e\u70b9 OAT \u9ad8\u5ea6", lowerOat: "\u4f4e\u70b9 OAT", upperOatAltitude: "\u9ad8\u70b9 OAT \u9ad8\u5ea6", upperOat: "\u9ad8\u70b9 OAT",
@@ -197,6 +214,7 @@
     };
     const units = { input_weight_lbs: "lb", selected_table_lbs: "lb", headwind_component_kt: "kt", tailwind_component_kt: "kt", crosswind_component_kt: "kt", ground_roll_ft: "ft", total_clear_50ft_ft: "ft", total_to_clear_50ft_ft: "ft", lift_off_kias: "KIAS", at_50ft_kias: "KIAS", "Pressure altitude ft": "ft", "ISA temp at altitude C": "C", "OAT at altitude C": "C", "Temp offset from ISA C": "C", "Percent BHP": "%", KTAS: "kt", GPH: "gal/hr", pressure_alt_ft: "ft", target_alt_ft: "ft", oat_c: "C", standard_oat_at_pressure_alt_c: "C", climb_speed_kias_at_start: "KIAS", climb_speed_kias_at_target: "KIAS", rate_of_climb_fpm_at_start: "fpm", rate_of_climb_fpm_at_target: "fpm", time_to_climb_min: "min", fuel_used_gal_climb_only: "gal", fuel_used_gal_with_start_taxi_takeoff: "gal", distance_to_climb_nm: "NM" };
     let currentLang = localStorage.getItem("pplLanguage") || "en";
+    units.approach_kias = "KIAS";
     function t(key) { return translations[currentLang][key] || translations.en[key] || key; }
     function escapeHtml(value) {
       return String(value).replace(/[&<>"']/g, function(char) {
@@ -214,10 +232,15 @@
       return escapeHtml(display) + (unit ? " " + escapeHtml(unit) : "");
     }
     function renderWeightBalancePlot(plot) {
-      const minCg = 34;
-      const maxCg = 49;
-      const minWeight = 1450;
-      const maxWeight = 2350;
+      const allPoints = plot.envelope.concat(plot.points);
+      const cgValues = allPoints.map(function(p) { return p.cg; });
+      const weightValues = allPoints.map(function(p) { return p.weight; });
+      const cgMargin = Math.max(1, (Math.max(...cgValues) - Math.min(...cgValues)) * 0.2);
+      const weightMargin = Math.max(50, (Math.max(...weightValues) - Math.min(...weightValues)) * 0.12);
+      const minCg = Math.min(...cgValues) - cgMargin;
+      const maxCg = Math.max(...cgValues) + cgMargin;
+      const minWeight = Math.min(...weightValues) - weightMargin;
+      const maxWeight = Math.max(...weightValues) + weightMargin;
       const width = 640;
       const height = 320;
       const padLeft = 52;
@@ -234,25 +257,37 @@
       const pathPoints = plot.points.map(function(point) {
         return x(point.cg).toFixed(1) + "," + y(point.weight).toFixed(1);
       }).join(" ");
+      const phaseColors = ["#146c63", "#2465a1", "#8e4376", "#6a741c"];
       const circles = plot.points.map(function(point, index) {
         const ok = point.status === "OK";
         return [
           "<g>",
-          "<circle cx=\"" + x(point.cg).toFixed(1) + "\" cy=\"" + y(point.weight).toFixed(1) + "\" r=\"6\" class=\"" + (ok ? "plot-ok" : "plot-fail") + "\"></circle>",
-          "<text x=\"" + (x(point.cg) + 9).toFixed(1) + "\" y=\"" + (y(point.weight) - 8 + (index % 2) * 18).toFixed(1) + "\">" + escapeHtml(point.label) + "</text>",
+          "<title>" + escapeHtml(point.label + ": " + point.weight.toFixed(1) + " lb / " + point.cg.toFixed(1) + " in / " + point.status) + "</title>",
+          "<circle cx=\"" + x(point.cg).toFixed(1) + "\" cy=\"" + y(point.weight).toFixed(1) + "\" r=\"6\" class=\"" + (ok ? "plot-ok" : "plot-fail") + "\" style=\"fill:" + (ok ? phaseColors[index] : "#a33a2b") + "\"></circle>",
           "</g>"
         ].join("");
+      }).join("");
+      const ticks = [];
+      for (let index = 0; index <= 4; index++) {
+        const cg = minCg + index * (maxCg - minCg) / 4;
+        const weight = minWeight + index * (maxWeight - minWeight) / 4;
+        ticks.push('<text text-anchor="middle" x="' + x(cg).toFixed(1) + '" y="' + (height - padBottom + 18) + '">' + cg.toFixed(1) + '</text>');
+        ticks.push('<text text-anchor="end" x="' + (padLeft - 8) + '" y="' + (y(weight) + 4).toFixed(1) + '">' + weight.toFixed(1) + '</text>');
+      }
+      const legend = plot.points.map(function(point, index) {
+        return '<div><span class="plot-key" style="background:' + (point.status === "OK" ? phaseColors[index] : "#a33a2b") + '"></span><strong>' + escapeHtml(point.label) + '</strong><span>' + point.weight.toFixed(1) + ' lb / ' + point.cg.toFixed(1) + ' in</span></div>';
       }).join("");
       return [
         "<svg class=\"wb-plot\" viewBox=\"0 0 " + width + " " + height + "\" role=\"img\" aria-label=\"CG envelope plot\">",
         "<line x1=\"" + padLeft + "\" y1=\"" + padTop + "\" x2=\"" + padLeft + "\" y2=\"" + (height - padBottom) + "\" class=\"plot-axis\"></line>",
         "<line x1=\"" + padLeft + "\" y1=\"" + (height - padBottom) + "\" x2=\"" + (width - padRight) + "\" y2=\"" + (height - padBottom) + "\" class=\"plot-axis\"></line>",
-        "<text x=\"18\" y=\"24\">Weight</text>",
+        "<text x=\"52\" y=\"12\">Weight (lb)</text>",
         "<text x=\"" + (width - 82) + "\" y=\"" + (height - 10) + "\">CG (in)</text>",
         "<polygon points=\"" + envelopePoints + "\" class=\"plot-envelope\"></polygon>",
+        ticks.join(""),
         "<polyline points=\"" + pathPoints + "\" class=\"plot-path\"></polyline>",
         circles,
-        "</svg>"
+        "</svg><div class=\"plot-legend\">" + legend + "</div>"
       ].join("");
     }
     function renderWeightBalanceResult(resultBox, result) {
@@ -298,6 +333,7 @@
       }).join("");
       resultBox.innerHTML = [
         "<div class=\"wb-layout\">",
+        (result.aircraft_name ? "<p class=\"wb-aircraft-name\">" + escapeHtml(result.registration + " / " + result.aircraft_name) + "</p>" : ""),
         "<section class=\"wb-summary\">" + summaryHtml + "</section>",
         "<section class=\"wb-block\"><h2>Calculation Table</h2><div class=\"table-scroll\"><table class=\"wb-table\"><thead><tr><th>Item</th><th>Arm</th><th>Weight</th><th>Moment</th><th>CG</th></tr></thead><tbody>" + rowsHtml + "</tbody></table></div></section>",
         "<section class=\"wb-block\"><h2>Envelope Check</h2><div class=\"table-scroll\"><table class=\"wb-table\"><thead><tr><th>Phase</th><th>Weight</th><th>Max</th><th>CG</th><th>CG Limit</th><th>Status</th></tr></thead><tbody>" + envelopeHtml + "</tbody></table></div></section>",
@@ -337,7 +373,7 @@
         "<div class=\"interp-layout\">",
         "<div class=\"interp-table-wrap\">",
         "<table class=\"interp-table\">",
-        "<thead><tr><th>PA / OAT</th><th>" + escapeHtml(step.temp_low) + "</th><th>" + escapeHtml(step.temp_high) + "</th></tr></thead>",
+        "<thead><tr><th>" + escapeHtml(step.axis_label || "PA / OAT") + "</th><th>" + escapeHtml(step.temp_low) + "</th><th>" + escapeHtml(step.temp_high) + "</th></tr></thead>",
         "<tbody>",
         "<tr><th>" + escapeHtml(step.alt_low) + "</th><td>" + escapeHtml(step.q11) + "</td><td>" + escapeHtml(step.q12) + "</td></tr>",
         "<tr><th>" + escapeHtml(step.alt_high) + "</th><td>" + escapeHtml(step.q21) + "</td><td>" + escapeHtml(step.q22) + "</td></tr>",
@@ -348,7 +384,7 @@
         "<div class=\"interp-math\">",
         "<div><span>1</span><p>Altitude interpolation at " + escapeHtml(step.temp_low) + "</p><strong>" + escapeHtml(step.low_formula) + " = " + escapeHtml(step.low_result) + "</strong></div>",
         "<div><span>2</span><p>Altitude interpolation at " + escapeHtml(step.temp_high) + "</p><strong>" + escapeHtml(step.high_formula) + " = " + escapeHtml(step.high_result) + "</strong></div>",
-        "<div><span>3</span><p>Temperature interpolation to " + escapeHtml(step.target_temp) + "</p><strong>" + escapeHtml(step.temp_formula) + " = " + escapeHtml(step.value) + "</strong></div>",
+        "<div><span>3</span><p>" + escapeHtml(step.second_axis_name || "Temperature") + " interpolation to " + escapeHtml(step.target_temp) + "</p><strong>" + escapeHtml(step.temp_formula) + " = " + escapeHtml(step.value) + "</strong></div>",
         "</div>",
         "</div>",
         "</article>"
@@ -382,6 +418,7 @@
       document.querySelectorAll(".result.empty").forEach(function(node) { node.textContent = t("resultHint"); });
       document.querySelectorAll(".result[data-last-result]").forEach(function(node) { renderResult(node, JSON.parse(node.dataset.lastResult)); });
       document.querySelectorAll(".steps[data-last-steps]").forEach(function(node) { renderSteps(node, JSON.parse(node.dataset.lastSteps)); });
+      document.dispatchEvent(new Event("ppl-language-change"));
     }
     document.querySelector(".language-toggle").addEventListener("click", function() { applyLanguage(currentLang === "en" ? "zh" : "en"); });
     document.querySelectorAll(".tab").forEach(function(button) {
@@ -408,13 +445,26 @@
       }
       form.addEventListener("submit", async function(event) {
         event.preventDefault();
+        if (window.aircraftProfiles && !window.aircraftProfiles.canCalculate(form)) return;
         const resultBox = form.parentElement.querySelector(".result");
         const stepsBox = form.parentElement.querySelector(".steps");
         resultBox.className = "result loading";
         resultBox.textContent = t("calculating");
         renderSteps(stepsBox, []);
-        const response = await fetch(form.dataset.endpoint, { method: "POST", body: new FormData(form) });
-        const payload = await response.json();
+        delete resultBox.dataset.lastResult;
+        const body = new FormData(form);
+        if (window.aircraftProfiles) window.aircraftProfiles.appendProfile(body);
+        let payload;
+        try {
+          const response = await fetch(form.dataset.endpoint, { method: "POST", body: body });
+          payload = await response.json();
+        } catch (error) {
+          if (window.aircraftProfiles && !window.aircraftProfiles.matchesProfile(body)) return;
+          resultBox.className = "result error";
+          resultBox.textContent = currentLang === "zh" ? "\u8fde\u63a5\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5\u3002" : "Connection failed. Please try again.";
+          return;
+        }
+        if (window.aircraftProfiles && !window.aircraftProfiles.matchesProfile(body)) return;
         if (!payload.ok) {
           resultBox.className = "result error";
           resultBox.textContent = payload.error;
@@ -428,5 +478,7 @@
     });
     applyLanguage(currentLang);
   </script>
+  <script src="{{ url_for('static', filename='performance.js') }}"></script>
+  <script src="{{ url_for('static', filename='aircraft.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,93 @@
+name: iOS IPA for AltStore
+on:
+  push:
+    branches: [codex/ios-iphone-support]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-build.yml'
+      - 'test_ipa.py'
+      - '*.py'
+      - 'static/**'
+      - 'templates/**'
+      - 'requirements.txt'
+      - 'test_offline.cjs'
+      - 'test_mobile.cjs'
+      - 'package*.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pip install -r requirements.txt -r ios/offline-requirements.txt
+      - run: python -m unittest discover -p 'test_*.py' -v
+      - run: node --test test_mobile.cjs
+      - run: python ios/build_offline.py
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Verify offline cold start and website parity
+        run: npm run test:offline
+  ios:
+    needs: checks
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt -r ios/offline-requirements.txt
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Build device IPA for AltStore re-signing
+        run: bash ios/build.sh altstore
+      - name: Select available iPhone simulator
+        run: |
+          xcrun simctl list devices available -j > "$RUNNER_TEMP/simulators.json"
+          python3 - <<'PY'
+          import json, os
+          with open(os.environ['RUNNER_TEMP'] + '/simulators.json') as handle:
+              runtimes = json.load(handle)['devices']
+          devices = [d for runtime, group in runtimes.items() if 'iOS' in runtime for d in group if d['name'].startswith('iPhone')]
+          if not devices:
+              raise SystemExit('No available iPhone simulator')
+          with open(os.environ['GITHUB_ENV'], 'a') as handle:
+              handle.write('SIMULATOR_ID=' + devices[0]['udid'] + '\n')
+          PY
+      - name: Test bundled offline startup and calculations
+        run: >-
+          xcodebuild -project ios/PPL.xcodeproj -scheme PPL
+          -destination "platform=iOS Simulator,id=$SIMULATOR_ID"
+          -derivedDataPath ios/build/Simulator
+          -resultBundlePath ios/build/NativeTests.xcresult CODE_SIGNING_ALLOWED=NO test
+      - name: Native test diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: PPL-native-test-results
+          path: ios/build/NativeTests.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PPL-AltStore
+          path: |
+            ios/build/PPL-AltStore.ipa
+            ios/build/PPL-AltStore.ipa.sha256
+            ios/build/package-info.json
+            ios/build/INSTALL.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Installation summary
+        run: |
+          echo '## PPL for AltStore Classic' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Download the PPL-AltStore artifact, extract the ZIP and import PPL-AltStore.ipa into AltStore Classic. No Apple signing secrets are used by this workflow.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Requires iOS 16.4+. All calculators and profiles run offline, including first launch. No HTTPS server is needed. This is not a TestFlight/App Store upload.' >> "$GITHUB_STEP_SUMMARY"

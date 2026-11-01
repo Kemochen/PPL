@@ -1,2 +1,10 @@
 __pycache__/
 *.py[cod]
+.flask-local-*.log
+ios/build/
+ios/BundledWeb/
+ios/PPL.xcodeproj/
+ios/Info.plist
+*.xcuserstate
+xcuserdata/
+node_modules/

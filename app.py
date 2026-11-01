@@ -1,14 +1,93 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, g
 import math
+import json
 
 from cruise import estimate_from_oat_bracket
 from climb import climb_from_pressure_alt
 from landing import landing_distance
 from takeoff import takeoff_distance
 from weight_balance import calculate_weight_balance
+from aircraft import catalogue, starter_profile, ffct_profile, validate_profile, profile_weight_balance
+from performance import normalize_performance, import_rows, builtin_dataset, manual_distance, manual_cruise, PHASES
+from reference_1974 import reference_distance, reference_cruise, table_view
 
 
 app = Flask(__name__)
+
+
+def aircraft_from_form():
+    raw = request.form.get("aircraft_profile")
+    if not raw:
+        return None
+    try:
+        return json.loads(raw)
+    except (TypeError, ValueError):
+        raise ValueError("Invalid aircraft profile JSON.") from None
+
+
+@app.before_request
+def check_performance_aircraft():
+    if request.path not in ("/api/takeoff", "/api/landing", "/api/cruise", "/api/climb"):
+        return None
+    try:
+        raw = aircraft_from_form()
+        if raw is not None:
+            profile, issues = validate_profile(raw)
+            if any("Model year mismatch" in issue for issue in issues):
+                raise ValueError("Confirm aircraft year and model before using performance tables.")
+            phase = request.path.rsplit("/", 1)[-1]
+            if phase == "climb":
+                if profile["model_id"] != "c172n":
+                    raise ValueError("Climb tables are currently C172N only.")
+            else:
+                performance, status = normalize_performance(profile["performance"], profile["model_id"])
+                if not status[phase]["ready"]:
+                    raise ValueError(phase.capitalize() + ": " + "; ".join(status[phase]["issues"]))
+                if performance[phase]["mode"] == "manual":
+                    g.manual_performance = performance[phase]
+                elif performance[phase]["mode"] == "c172m1974":
+                    g.reference_1974 = True
+    except ValueError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+
+
+@app.get("/api/aircraft/models")
+def api_aircraft_models():
+    return jsonify({"ok": True, "models": catalogue(), "starter_profile": starter_profile(),
+                    "starter_profiles": [starter_profile(), ffct_profile()]})
+
+
+@app.post("/api/aircraft/validate")
+def api_aircraft_validate():
+    return api_response(lambda: aircraft_validation_result())
+
+
+def aircraft_validation_result():
+    profile, issues = validate_profile(request.get_json(silent=True))
+    _, performance_status = normalize_performance(profile["performance"], profile["model_id"])
+    return {"profile": profile, "ready": not issues, "issues": issues, "performance_status": performance_status}
+
+
+@app.post("/api/performance/import")
+def api_performance_import():
+    def parse():
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            raise ValueError("A table phase and CSV/TSV text are required.")
+        return {"rows": import_rows(data.get("phase"), data.get("text"))}
+    return api_response(parse)
+
+
+@app.get("/api/performance/builtin/<phase>")
+def api_performance_builtin(phase):
+    if phase not in PHASES:
+        return jsonify({"ok": False, "error": "Unknown performance table."}), 400
+    return api_response(lambda: builtin_dataset(phase))
+
+
+@app.get("/api/performance/reference-1974/<phase>")
+def api_reference_1974(phase):
+    return api_response(lambda: table_view(phase))
 
 
 def number_value(name, default=0.0):
@@ -165,6 +244,12 @@ def api_takeoff():
         wind = wind_values_from_form()
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
+    if getattr(g, "reference_1974", False):
+        return api_response(lambda: reference_distance("takeoff", number_value("weight_lbs"),
+            number_value("pressure_altitude_ft"), number_value("oat_c"), wind, bool_value("grass")))
+    if getattr(g, "manual_performance", None) is not None:
+        return api_response(lambda: manual_distance(g.manual_performance, "takeoff", number_value("weight_lbs"),
+            number_value("pressure_altitude_ft"), number_value("oat_c"), wind, bool_value("grass")))
     return api_response(lambda: takeoff_distance(
         weight_lbs=number_value("weight_lbs"),
         pressure_altitude_ft=number_value("pressure_altitude_ft"),
@@ -183,6 +268,12 @@ def api_landing():
         wind = wind_values_from_form()
     except ValueError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 400
+    if getattr(g, "reference_1974", False):
+        return api_response(lambda: reference_distance("landing", number_value("weight_lbs"),
+            number_value("pressure_altitude_ft"), number_value("oat_c"), wind, bool_value("grass")))
+    if getattr(g, "manual_performance", None) is not None:
+        return api_response(lambda: manual_distance(g.manual_performance, "landing", number_value("weight_lbs"),
+            number_value("pressure_altitude_ft"), number_value("oat_c"), wind, bool_value("grass")))
     return api_response(lambda: landing_distance(
         pressure_altitude_ft=number_value("pressure_altitude_ft"),
         oat_c=number_value("oat_c"),
@@ -196,6 +287,14 @@ def api_landing():
 
 @app.post("/api/cruise")
 def api_cruise():
+    if getattr(g, "reference_1974", False):
+        return api_response(lambda: reference_cruise(number_value("pressure_altitude_ft"),
+            number_value("lower_oat_altitude_ft"), number_value("lower_oat_c"),
+            number_value("upper_oat_altitude_ft"), number_value("upper_oat_c"), number_value("rpm")))
+    if getattr(g, "manual_performance", None) is not None:
+        return api_response(lambda: manual_cruise(g.manual_performance, number_value("pressure_altitude_ft"),
+            number_value("lower_oat_altitude_ft"), number_value("lower_oat_c"),
+            number_value("upper_oat_altitude_ft"), number_value("upper_oat_c"), number_value("rpm")))
     return api_response(lambda: estimate_from_oat_bracket(
         alt_ft=number_value("pressure_altitude_ft"),
         lower_alt_ft=number_value("lower_oat_altitude_ft"),
@@ -217,6 +316,14 @@ def api_climb():
 
 @app.post("/api/weight-balance")
 def api_weight_balance():
+    if request.form.get("aircraft_profile"):
+        return api_response(lambda: profile_weight_balance(
+            aircraft_from_form(),
+            {key: number_value(key) for key in (
+                "pilot_weight_lbs", "front_passenger_weight_lbs", "rear_left_weight_lbs",
+                "rear_right_weight_lbs", "baggage1_weight_lbs", "baggage2_weight_lbs",
+                "fuel_gal", "taxi_fuel_gal", "trip_fuel_gal")},
+        ))
     return api_response(lambda: calculate_weight_balance(
         empty_weight_lbs=number_value("empty_weight_lbs", 1541),
         empty_arm_in=number_value("empty_arm_in", 38.2),

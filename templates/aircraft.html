@@ -1,0 +1,64 @@
+<section class="panel aircraft-panel" id="aircraft">
+  <div class="profile-toolbar">
+    <label><span data-profile-text="saved">Saved aircraft</span><select id="saved-aircraft"><option value="">New aircraft</option></select></label>
+    <button type="button" id="new-aircraft" class="profile-command" data-profile-text="new">New aircraft</button>
+    <button type="button" id="copy-aircraft" class="profile-command" data-profile-text="copy">Duplicate</button>
+    <button type="button" id="delete-aircraft" class="profile-command" data-profile-text="delete">Delete</button>
+    <button type="button" id="export-aircraft" class="profile-command" data-profile-text="export">Export backup</button>
+    <label class="profile-command import-command"><span data-profile-text="import">Import backup</span><input id="import-aircraft" type="file" accept="application/json,.json" hidden></label>
+  </div>
+  <p class="profile-storage" data-profile-text="storage">Profiles are saved in this browser. Export a backup to move them to another device.</p>
+  <form id="aircraft-editor" class="profile-editor">
+    <div class="profile-section">
+      <h2 data-profile-text="identity">Aircraft identity</h2>
+      <div class="profile-grid">
+        <label><span data-profile-text="model">Model</span><select name="model_id" required></select></label>
+        <label><span data-profile-text="name">Aircraft name</span><input name="name" required maxlength="200"></label>
+        <label><span data-profile-text="registration">Registration</span><input name="registration" placeholder="C-XXXX" maxlength="30"></label>
+        <label><span data-profile-text="serial">Serial number</span><input name="serial_number" maxlength="80"></label>
+        <label><span data-profile-text="year">Model year</span><input name="year" type="number" min="1900" max="2100" step="1"></label>
+        <label><span data-profile-text="wbDate">W&B document date</span><input name="wb_date" type="date"></label>
+        <label class="profile-span"><span data-profile-text="wbReference">Aircraft W&B document / POH reference</span><input name="wb_reference" maxlength="2000"></label>
+        <label class="profile-span"><span data-profile-text="notes">Configuration / STC notes</span><textarea name="notes" rows="2" maxlength="2000"></textarea></label>
+      </div>
+      <p id="model-year-note" class="profile-notice"></p>
+      <p id="model-source"></p>
+      <p class="profile-notice" data-profile-text="scope">Templates: normal-category landplanes. Confirm the exact serial number, seat positions, tank configuration and STCs against this aircraft's documents.</p>
+    </div>
+    <div class="profile-section">
+      <h2 data-profile-text="empty">Actual empty aircraft</h2>
+      <div class="profile-grid">
+        <label><span data-profile-text="emptyWeight">Basic empty weight (lb)</span><input name="empty_weight_lb" type="number" step="any" min="0"></label>
+        <label><span data-profile-text="emptyMoment">Empty moment (lb-in, unscaled)</span><input name="empty_moment_lb_in" type="number" step="any"></label>
+        <div class="profile-derived"><span data-profile-text="emptyCg">Empty CG (in)</span><output id="profile-empty-cg">-</output></div>
+      </div>
+    </div>
+    <div class="profile-section">
+      <h2 data-profile-text="limits">Weight and fuel limits</h2>
+      <div class="profile-grid">
+        {% for field, label in [('max_ramp_lb', 'Maximum ramp (lb)'), ('max_takeoff_lb', 'Maximum takeoff (lb)'), ('max_landing_lb', 'Maximum landing (lb)'), ('usable_fuel_gal', 'Usable fuel (US gal)'), ('fuel_density_lb_gal', 'Fuel density (lb / US gal)'), ('fuel_arm_in', 'Fuel arm (in)'), ('baggage_total_lb', 'Combined baggage limit (lb)')] %}
+        <label><span data-profile-text="{{ field }}">{{ label }}</span><input name="{{ field }}" type="number" step="any" {% if field != 'fuel_arm_in' %}min="0"{% endif %}></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="profile-section">
+      <h2 data-profile-text="stations">Loading stations</h2>
+      <div class="table-scroll"><table class="profile-table"><thead><tr><th data-profile-text="station">Station</th><th data-profile-text="enabled">Enabled</th><th>Arm (in)</th><th data-profile-text="stationMax">Station max (lb, optional)</th></tr></thead><tbody id="profile-stations"></tbody></table></div>
+    </div>
+    <div class="profile-section">
+      <h2 data-profile-text="envelope">CG envelope</h2>
+      <div class="table-scroll"><table class="profile-table"><thead><tr><th data-profile-text="weightLb">Weight (lb)</th><th data-profile-text="forward">Forward (in)</th><th data-profile-text="aft">Aft (in)</th><th></th></tr></thead><tbody id="profile-cg-rows"></tbody></table></div>
+      <button type="button" class="profile-command" id="add-cg-row" data-profile-text="addRow">Add CG row</button>
+    </div>
+    {% include 'performance.html' %}
+    <div class="profile-save-bar">
+      <button class="primary" type="submit" data-profile-text="save">Save aircraft</button>
+      <button class="profile-command" type="button" id="use-aircraft" data-profile-text="use">Use saved aircraft</button>
+    </div>
+    <div id="profile-message" role="status" aria-live="polite"></div>
+  </form>
+  <section class="profile-section">
+    <h2 data-profile-text="catalogue">Model catalogue</h2>
+    <div class="table-scroll"><table class="profile-table"><thead><tr><th data-profile-text="model">Model</th><th data-profile-text="year">Model year</th><th data-profile-text="templateStatus">W&B template</th><th data-profile-text="performance">Performance tables</th><th data-profile-text="source">Source</th></tr></thead><tbody id="model-catalogue"></tbody></table></div>
+  </section>
+</section>

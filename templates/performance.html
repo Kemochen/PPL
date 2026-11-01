@@ -1,0 +1,48 @@
+<section class="profile-section" id="performance-editor">
+  <h2 data-perf-text="title">POH performance data</h2>
+  <div class="performance-tabs" role="tablist" aria-label="Performance data tables">
+    {% for phase, title in [('takeoff', 'Takeoff'), ('landing', 'Landing'), ('cruise', 'Cruise')] %}
+    <button type="button" class="profile-command{% if loop.first %} active{% endif %}" role="tab" data-perf-tab="{{ phase }}" aria-selected="{{ 'true' if loop.first else 'false' }}">{{ title }}</button>
+    {% endfor %}
+  </div>
+  {% for phase, title in [('takeoff', 'Takeoff'), ('landing', 'Landing'), ('cruise', 'Cruise')] %}
+  <div class="performance-pane" data-perf-pane="{{ phase }}" {% if not loop.first %}hidden{% endif %}>
+    <div class="profile-grid">
+      <label><span data-perf-text="mode">Data source</span><select data-perf-meta="mode" name="perf_{{ phase }}_mode"><option value="none" data-perf-text="none">Not loaded</option><option value="builtin" data-perf-text="builtin">Built-in C172N table</option><option value="c172m1974" data-perf-text="reference1974">1974 C172M reference</option><option value="manual" data-perf-text="manual">Manual POH table</option></select></label>
+      <div class="performance-status" data-perf-status role="status"></div>
+    </div>
+    <div class="performance-reference" data-perf-reference hidden>
+      <p class="profile-notice" data-perf-text="referenceNotice">Published 1974 reference only; applicability to this aircraft is not confirmed. Check the aircraft's manual, propeller and STCs.</p>
+      <p data-perf-reference-conditions></p>
+      <p><a data-perf-reference-source target="_blank" rel="noopener" data-perf-text="referenceSource">Open source manual</a></p>
+      <div class="table-scroll"><table class="profile-table performance-table"><thead><tr data-perf-reference-head></tr></thead><tbody data-perf-reference-rows></tbody></table></div>
+    </div>
+    <div data-perf-manual hidden>
+      <div class="profile-grid">
+        <label class="profile-span"><span data-perf-text="source">POH edition / revision / figure / page</span><input data-perf-meta="source" name="perf_{{ phase }}_source" maxlength="2000"></label>
+        <label class="profile-span"><span data-perf-text="conditions">Aircraft configuration and POH conditions</span><textarea data-perf-meta="conditions" name="perf_{{ phase }}_conditions" rows="2" maxlength="2000"></textarea></label>
+        {% if phase == 'cruise' %}
+        <label><span data-perf-text="referenceWeight">Table reference weight (lb)</span><input data-perf-meta="reference_weight_lb" name="perf_{{ phase }}_reference_weight_lb" type="number" step="any" min="0.1"></label>
+        {% else %}
+        {% for field, key, label in [('headwind_pct', 'headwindPct', 'Headwind reduction (%)'), ('headwind_step_kt', 'headwindStep', 'Headwind per (kt)'), ('headwind_max_kt', 'headwindMax', 'POH headwind limit (kt)'), ('tailwind_pct', 'tailwindPct', 'Tailwind increase (%)'), ('tailwind_step_kt', 'tailwindStep', 'Tailwind per (kt)'), ('tailwind_max_kt', 'tailwindMax', 'POH tailwind limit (kt)')] %}
+        <label><span data-perf-text="{{ key }}">{{ label }}</span><input data-perf-meta="{{ field }}" name="perf_{{ phase }}_{{ field }}" type="number" step="any" min="0"></label>
+        {% endfor %}
+        <label><span data-perf-text="grassMode">Grass correction</span><select data-perf-meta="grass_mode" name="perf_{{ phase }}_grass_mode"><option value="none" data-perf-text="unsupported">Not recorded</option><option value="ground_add" data-perf-text="groundAdd">Add % of ground roll to both distances</option><option value="both_percent" data-perf-text="bothPercent">Increase both distances by %</option></select></label>
+        <label><span data-perf-text="grassPct">Grass increase (%)</span><input data-perf-meta="grass_pct" name="perf_{{ phase }}_grass_pct" type="number" step="any" min="0" max="100"></label>
+        {% endif %}
+      </div>
+      <div class="performance-table-actions">
+        <button type="button" class="profile-command" data-perf-add data-perf-text="add">Add row</button>
+        <button type="button" class="profile-command" data-perf-template data-perf-text="template">CSV template</button>
+        <label class="profile-command import-command"><span data-perf-text="import">Import CSV / TSV</span><input type="file" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values" data-perf-file hidden></label>
+        <button type="button" class="profile-command" data-perf-export data-perf-text="export">Export CSV</button>
+        <button type="button" class="profile-command" data-perf-copy data-perf-text="copy">Copy built-in C172N table</button>
+        <button type="button" class="profile-command" data-perf-clear data-perf-text="clear">Clear rows</button>
+      </div>
+      <div class="table-scroll"><table class="profile-table performance-table"><thead><tr data-perf-head></tr></thead><tbody data-perf-rows></tbody></table></div>
+      <details class="performance-paste"><summary data-perf-text="paste">Paste CSV / Excel table</summary><textarea rows="5" data-perf-paste aria-label="CSV or tab-separated POH table"></textarea><button type="button" class="profile-command" data-perf-import data-perf-text="importRows">Import rows</button></details>
+      <p class="performance-error" data-perf-error role="status"></p>
+    </div>
+  </div>
+  {% endfor %}
+</section>

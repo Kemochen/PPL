@@ -1,0 +1,11 @@
+{
+  "name": "ppl-calculator-tests",
+  "private": true,
+  "scripts": {
+    "test": "node --test test_mobile.cjs",
+    "test:offline": "node test_offline.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
