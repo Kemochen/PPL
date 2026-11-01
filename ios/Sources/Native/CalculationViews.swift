@@ -159,7 +159,7 @@ struct PerformanceView: View {
                 }
                 if let error { Section { Text(error).foregroundStyle(.red).accessibilityIdentifier("calculation-error") } }
                 if let calculation {
-                    MetricSection(calculation: calculation).id("metrics")
+                    MetricSection(calculation: calculation)
                     StepsSection(steps: calculation.steps)
                 }
             }
@@ -209,6 +209,7 @@ struct MetricSection: View {
                         .foregroundStyle(.primary)
                 }
                 .accessibilityElement(children: .combine).accessibilityIdentifier("metric-" + key)
+                .id(key == keys.first ? "metrics" : "metric-row-" + key)
             }
         }
     }

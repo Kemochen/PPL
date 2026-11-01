@@ -17,7 +17,7 @@ final class NativeUITests: XCTestCase {
         XCUIDevice.shared.orientation = .landscapeLeft
         let rotated = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in app.windows.firstMatch.frame.width > app.windows.firstMatch.frame.height }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [rotated], timeout: 10), .completed)
-        Thread.sleep(forTimeInterval: 1)
+        Thread.sleep(forTimeInterval: 2)
         for _ in 0..<4 where !ground.exists { app.swipeUp() }
         XCTAssertTrue(ground.exists)
         saveScreenshot(app, "native-landscape")
@@ -60,7 +60,9 @@ final class NativeUITests: XCTestCase {
         saveScreenshot(app, "native-wb-plot")
     }
     private func saveScreenshot(_ app: XCUIApplication, _ name: String) {
-        let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = name; attachment.lifetime = .keepAlways
+        let screenshot = XCUIScreen.main.screenshot()
+        if name == "native-landscape" { XCTAssertGreaterThan(screenshot.image.size.width, screenshot.image.size.height) }
+        let attachment = XCTAttachment(screenshot: screenshot); attachment.name = name; attachment.lifetime = .keepAlways
         add(attachment)
     }
 }

@@ -151,6 +151,11 @@ struct NativeEngine {
         var steps = [MathStep(title: "OAT interpolation", formula: "Lower OAT + altitude ratio × OAT difference", value: Self.math(altitude, lowAlt, highAlt, lowOAT, highOAT) + " °C"),
                      MathStep(title: "ISA offset", formula: "ISA = 15 − 2 × altitude / 1000; offset = OAT − ISA", value: "15.0 − 2.0 × \(n(altitude / 1000)) = \(n(standard)) °C\n\(n(oat)) − (\(n(standard))) = \(n(offset)) °C")]
         let reference = mode == "c172m1974"
+        if !reference {
+            var conditions = table["conditions"].text
+            if let weight = table["reference_weight_lb"].double { conditions += "\nReference weight: \(n(weight)) lb" }
+            steps.insert(MathStep(title: "POH source and conditions", formula: table["source"].text, value: conditions), at: 0)
+        }
         var rows = table["rows"].array
         if reference {
             guard abs(offset) <= 0.050000001 else { throw CalculationError("1974 cruise reference is standard-day only: interpolated OAT must be \(n(standard)) °C.") }

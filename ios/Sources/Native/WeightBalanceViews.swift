@@ -91,7 +91,7 @@ struct WBEnvelopeSection: View {
             ForEach(Array(calculation.result["envelope"].array.enumerated()), id: \.offset) { index, phase in
                 WBPhaseRow(phase: phase, explanation: calculation.result["explanations"][index])
             }
-        }.accessibilityIdentifier("wb-envelope")
+        }
     }
 }
 
@@ -169,10 +169,21 @@ struct CGPlot: View {
                 var line = Path(); line.move(to: point(first)); for row in points.dropFirst() { line.addLine(to: point(row)) }
                 context.stroke(line, with: .color(.primary), style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
             }
+            var labelPositions: [Int: Double] = [:]
+            var nextLabelY = rect.minY + 10
+            for index in points.indices.sorted(by: { point(points[$0]).y < point(points[$1]).y }) {
+                let y = max(point(points[index]).y, nextLabelY)
+                labelPositions[index] = y
+                nextLabelY = y + 18
+            }
+            let overflow = max((labelPositions.values.max() ?? rect.maxY) - rect.maxY + 8, 0)
             for (index, row) in points.enumerated() {
                 let location = point(row)
                 context.fill(Path(ellipseIn: CGRect(x: location.x - 4, y: location.y - 4, width: 8, height: 8)), with: .color(row["status"].text == "OK" ? .green : .red))
-                context.draw(Text("\(index + 1). " + row["label"].text).font(.system(size: 10)), at: CGPoint(x: min(location.x + 7, rect.maxX - 24), y: location.y + Double(index % 2 == 0 ? -12 : 12)), anchor: .leading)
+                let label = CGPoint(x: min(location.x + 14, rect.maxX - 75), y: labelPositions[index]! - overflow)
+                var leader = Path(); leader.move(to: location); leader.addLine(to: CGPoint(x: label.x - 3, y: label.y))
+                context.stroke(leader, with: .color(.secondary.opacity(0.6)), lineWidth: 0.7)
+                context.draw(Text("\(index + 1). " + row["label"].text).font(.system(size: 10)), at: label, anchor: .leading)
             }
             context.draw(Text("CG (in)").font(.caption), at: CGPoint(x: rect.midX, y: size.height - 5), anchor: .bottom)
             context.draw(Text("lb").font(.caption), at: CGPoint(x: 14, y: 7))
