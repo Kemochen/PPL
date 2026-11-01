@@ -156,6 +156,7 @@ struct PerformanceView: View {
                         } catch { self.error = error.localizedDescription; calculation = nil }
                     } label: { Label(store.label("Calculate", "计算"), systemImage: "equal.square") }
                     .accessibilityIdentifier("calculate-performance")
+                    .id("calculate-anchor")
                 }
                 if let error { Section { Text(error).foregroundStyle(.red).accessibilityIdentifier("calculation-error") } }
                 if let calculation {
@@ -163,7 +164,12 @@ struct PerformanceView: View {
                     StepsSection(steps: calculation.steps)
                 }
             }
-            .onChange(of: resultToken) { _, _ in withAnimation { proxy.scrollTo("metrics", anchor: .top) } }
+            .onChange(of: resultToken) { _, _ in
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(150))
+                    withAnimation { proxy.scrollTo("calculate-anchor", anchor: .top) }
+                }
+            }
         }
         .navigationTitle(store.label(phase.title, ["takeoff": "起飞", "landing": "降落", "cruise": "巡航", "climb": "爬升"][phase.rawValue]!))
         .toolbar {
@@ -209,7 +215,6 @@ struct MetricSection: View {
                         .foregroundStyle(.primary)
                 }
                 .accessibilityElement(children: .combine).accessibilityIdentifier("metric-" + key)
-                .id(key == keys.first ? "metrics" : "metric-row-" + key)
             }
         }
     }
