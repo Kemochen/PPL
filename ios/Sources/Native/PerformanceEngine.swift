@@ -81,7 +81,6 @@ struct NativeEngine {
             let (parsed, issues) = try NativeValidation.profile(raw, catalogue: data["catalogue"])
             profile = parsed; model = parsed["model_id"].text
             if issues.contains(where: { $0.hasPrefix("Model year mismatch") }) { throw CalculationError("Confirm aircraft model and year before using POH tables.") }
-            if phase == "climb", model != "c172n" { throw CalculationError("Climb tables are currently C172N only.") }
             if NativeValidation.phases.contains(phase) {
                 let (validated, problems) = try NativeValidation.dataset(parsed["performance"][phase], phase: phase, model: model)
                 guard problems.isEmpty else { throw CalculationError(problems.joined(separator: "; ")) }
@@ -89,8 +88,8 @@ struct NativeEngine {
             }
         }
         if phase == "weight-balance" { return try weightBalance(form, profile: profile) }
-        if phase == "climb" { return try climb(form) }
         if mode == "builtin" { table = data["builtin"][phase] }
+        if phase == "climb" { return try climb(form, table: table) }
         if phase == "cruise" { return try cruise(form, table: table, mode: mode) }
         guard ["takeoff", "landing"].contains(phase) else { throw CalculationError("Unknown calculation.") }
         let wind = try Self.wind(form)
@@ -244,11 +243,11 @@ struct NativeEngine {
         return Calculation(result: .numbers(values), steps: steps)
     }
 
-    func climb(_ form: J) throws -> Calculation {
+    func climb(_ form: J, table: J) throws -> Calculation {
         let start = try Self.num(form, "pressure_altitude_ft"), target = try Self.num(form, "target_altitude_ft"), oat = try Self.num(form, "oat_c")
         guard target > start else { throw CalculationError("Target altitude must be above starting pressure altitude.") }
-        let rows = data["climb"].array
-        var steps: [MathStep] = []
+        let rows = table["rows"].array
+        var steps = [MathStep(title: "Climb POH source and conditions", formula: table["source"].text, value: table["conditions"].text)]
         func at(_ altitude: Double, name: String) throws -> [String: Double] {
             let (a, b) = try Self.bracket(rows.compactMap { $0["pa_ft"].double }, altitude, "Climb pressure altitude")
             let first = rows.first { $0["pa_ft"].double == a }!, last = rows.first { $0["pa_ft"].double == b }!
@@ -260,8 +259,12 @@ struct NativeEngine {
             return result
         }
         let first = try at(start, name: "Start"), last = try at(target, name: "Target")
-        let factor = 1 + 0.1 * max(oat - first["std_temp_c"]!, 0) / 10
-        steps.append(MathStep(title: "Temperature factor", formula: "+10% per 10°C above standard at start", value: "1.0 + 0.1 × max(\(n(oat)) − (\(n(first["std_temp_c"]!))), 0.0) / 10.0 = \(n(factor * 100))%"))
+        let percent = try NativeValidation.required(table["warm_temp_pct"], "Warm-temperature percentage")
+        let step = try NativeValidation.required(table["warm_temp_step_c"], "Warm-temperature step")
+        let extraFuel = try NativeValidation.required(table["start_taxi_takeoff_fuel_gal"], "Start / taxi / takeoff fuel")
+        guard step > 0 else { throw CalculationError("Temperature step must be positive") }
+        let factor = 1 + percent / 100 * max(oat - first["std_temp_c"]!, 0) / step
+        steps.append(MathStep(title: "Temperature factor", formula: "+\(n(percent))% per \(n(step))°C above standard at start; no cold reduction", value: "1.0 + (\(n(percent)) / 100.0) × max(\(n(oat)) − (\(n(first["std_temp_c"]!))), 0.0) / \(n(step)) = \(n(factor * 100))%"))
         var values = ["pressure_alt_ft": start, "target_alt_ft": target, "oat_c": oat, "standard_oat_at_pressure_alt_c": first["std_temp_c"]!,
                       "climb_speed_kias_at_start": first["climb_speed_kias"]!, "climb_speed_kias_at_target": last["climb_speed_kias"]!,
                       "rate_of_climb_fpm_at_start": first["rate_fpm"]!, "rate_of_climb_fpm_at_target": last["rate_fpm"]!]
@@ -270,8 +273,8 @@ struct NativeEngine {
             values[output] = corrected
             steps.append(MathStep(title: output, formula: "(Target cumulative − start cumulative) × temperature factor", value: "(\(n(last[key]!)) − \(n(first[key]!))) × \(n(factor * 100))% = \(n(corrected))"))
         }
-        values["fuel_used_gal_with_start_taxi_takeoff"] = values["fuel_used_gal_climb_only"]! + 1.1
-        steps.append(MathStep(title: "Start / taxi / takeoff fuel", formula: "Climb fuel + 1.1 US gal", value: "\(n(values["fuel_used_gal_climb_only"]!)) + 1.1 = \(n(values["fuel_used_gal_with_start_taxi_takeoff"]!)) US gal"))
+        values["fuel_used_gal_with_start_taxi_takeoff"] = values["fuel_used_gal_climb_only"]! + extraFuel
+        steps.append(MathStep(title: "Start / taxi / takeoff fuel", formula: "Climb fuel + recorded start / taxi / takeoff allowance", value: "\(n(values["fuel_used_gal_climb_only"]!)) + \(n(extraFuel)) = \(n(values["fuel_used_gal_with_start_taxi_takeoff"]!)) US gal"))
         return Calculation(result: .numbers(values.mapValues(rounded1)), steps: steps)
     }
 }

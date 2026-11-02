@@ -54,4 +54,31 @@ final class NativeParityTests: XCTestCase {
         XCTAssertEqual(exact.1.grid?.q11, 1000)
         XCTAssertFalse(exact.1.value.contains("nan"))
     }
+    func testManualClimbUsesSelectedAircraftRowsAndRules() throws {
+        let engine = try NativeEngine()
+        var profile = engine.data["profiles"][1]
+        let form = J.numbers(["pressure_altitude_ft": 250, "target_altitude_ft": 750, "oat_c": 24.5])
+        XCTAssertThrowsError(try engine.calculate("climb", form: form, profile: profile))
+        var table = J.object(["mode": .string("manual"), "source": .string("Synthetic unit test, not flight data"), "conditions": .string("Test fixture only"),
+                              "warm_temp_pct": .number(20), "warm_temp_step_c": .number(10), "start_taxi_takeoff_fuel_gal": .number(0.5),
+                              "rows": .array([
+                                .numbers(["pa_ft": 0, "std_temp_c": 15, "climb_speed_kias": 80, "rate_fpm": 500, "time_from_sl_min": 0, "fuel_from_sl_gal": 0, "distance_from_sl_nm": 0]),
+                                .numbers(["pa_ft": 1000, "std_temp_c": 13, "climb_speed_kias": 78, "rate_fpm": 400, "time_from_sl_min": 4, "fuel_from_sl_gal": 2, "distance_from_sl_nm": 6])])])
+        XCTAssertTrue(try NativeValidation.dataset(table, phase: "climb", model: "c172m").1.isEmpty)
+        profile["performance"]["climb"] = table
+        let result = try engine.calculate("climb", form: form, profile: profile)
+        XCTAssertEqual(result.result["time_to_climb_min"].double, 2.4)
+        XCTAssertEqual(result.result["fuel_used_gal_climb_only"].double, 1.2)
+        XCTAssertEqual(result.result["fuel_used_gal_with_start_taxi_takeoff"].double, 1.7)
+        XCTAssertEqual(result.result["distance_to_climb_nm"].double, 3.6)
+        XCTAssertTrue(result.steps.contains { $0.title == "Temperature factor" && $0.value.contains("20.0") })
+        XCTAssertThrowsError(try engine.calculate("climb", form: .numbers(["pressure_altitude_ft": 0, "target_altitude_ft": 1001, "oat_c": 15]), profile: profile))
+        table["rows"][1]["fuel_from_sl_gal"] = .number(-1)
+        XCTAssertThrowsError(try NativeValidation.dataset(table, phase: "climb", model: "c172m"))
+        table["rows"][1]["fuel_from_sl_gal"] = .number(2)
+        table["rows"][0]["fuel_from_sl_gal"] = .number(3)
+        XCTAssertFalse(try NativeValidation.dataset(table, phase: "climb", model: "c172m").1.isEmpty)
+        table["rows"][0] = table["rows"][1]
+        XCTAssertThrowsError(try NativeValidation.dataset(table, phase: "climb", model: "c172m"))
+    }
 }

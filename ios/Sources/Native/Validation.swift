@@ -1,11 +1,16 @@
 import Foundation
 
 enum NativeValidation {
-    static let phases = ["takeoff", "landing", "cruise"]
+    static let phases = ["takeoff", "landing", "cruise", "climb"]
     static let columns: [String: [String]] = [
         "takeoff": ["weight_lb", "pa_ft", "oat_c", "ground_ft", "total_ft", "lift_off_kias", "at_50ft_kias"],
         "landing": ["weight_lb", "pa_ft", "oat_c", "ground_ft", "total_ft", "at_50ft_kias"],
-        "cruise": ["pa_ft", "isa_offset_c", "rpm", "percent_bhp", "ktas", "gph"]]
+        "cruise": ["pa_ft", "isa_offset_c", "rpm", "percent_bhp", "ktas", "gph"],
+        "climb": ["pa_ft", "std_temp_c", "climb_speed_kias", "rate_fpm", "time_from_sl_min", "fuel_from_sl_gal", "distance_from_sl_nm"]]
+    static let climbRules = ["warm_temp_pct", "warm_temp_step_c", "start_taxi_takeoff_fuel_gal"]
+    static func defaultClimb(model: String) -> J {
+        .object(["mode": .string(model == "c172n" ? "builtin" : "none"), "source": .string(""), "conditions": .string(""), "rows": .array([])])
+    }
     static let rules = ["headwind_pct", "headwind_step_kt", "headwind_max_kt", "tailwind_pct", "tailwind_step_kt", "tailwind_max_kt", "grass_pct"]
     static let wbFields = ["empty_weight_lb", "empty_moment_lb_in", "fuel_density_lb_gal", "fuel_arm_in", "max_ramp_lb", "max_takeoff_lb", "max_landing_lb", "usable_fuel_gal", "baggage_total_lb"]
 
@@ -29,7 +34,7 @@ enum NativeValidation {
             guard parsed[key].text.count <= 2000 else { throw CalculationError("POH text is too long.") }
             parsed[key] = .string(parsed[key].text.trimmingCharacters(in: .whitespacesAndNewlines))
         }
-        for key in rules + ["reference_weight_lb"] {
+        for key in rules + climbRules + ["reference_weight_lb"] {
             let value = try number(parsed[key], key, optional: true)
             if let value {
                 guard value >= 0, !(key.hasSuffix("_pct") && value > 100), !(key == "reference_weight_lb" && value == 0) else { throw CalculationError("Invalid correction / reference weight: " + key) }
@@ -47,7 +52,9 @@ enum NativeValidation {
             for key in columns[phase] ?? [] {
                 let value = try number(row[key], "Row \(index + 1) \(key)", optional: true)
                 if let value {
-                    if !["pa_ft", "oat_c", "isa_offset_c"].contains(key) && value <= 0 { throw CalculationError("POH row values must be positive: " + key) }
+                    let signed = ["pa_ft", "oat_c", "isa_offset_c", "std_temp_c"].contains(key)
+                    let cumulative = key.hasSuffix("_from_sl_min") || key.hasSuffix("_from_sl_gal") || key.hasSuffix("_from_sl_nm")
+                    if (!signed && !cumulative && value <= 0) || (cumulative && value < 0) { throw CalculationError("Invalid POH row value: " + key) }
                     values[key] = .number(value)
                 } else { incomplete = true; values[key] = .null }
             }
@@ -56,19 +63,30 @@ enum NativeValidation {
             if incomplete { issues.append("Row \(index + 1): fill every cell"); continue }
             if phase == "cruise" {
                 guard result["percent_bhp"].double! <= 100 else { throw CalculationError("Power exceeds 100% BHP.") }
-            } else {
+            } else if phase != "climb" {
                 guard result["total_ft"].double! >= result["ground_ft"].double! else { throw CalculationError("50 ft distance cannot be below ground roll.") }
             }
-            let keys = phase == "cruise" ? ["pa_ft", "isa_offset_c", "rpm"] : ["weight_lb", "pa_ft", "oat_c"]
+            let keys = phase == "climb" ? ["pa_ft"] : phase == "cruise" ? ["pa_ft", "isa_offset_c", "rpm"] : ["weight_lb", "pa_ft", "oat_c"]
             guard seen.insert(keys.map { result[$0].double! }).inserted else { throw CalculationError("Duplicate POH table coordinates.") }
         }
         parsed["rows"] = .array(normalized)
         if mode == "none" { return (parsed, ["No performance table selected"] ) }
         if mode == "builtin" { return (parsed, model == "c172n" ? [] : ["Built-in data is C172N only"]) }
-        if mode == "c172m1974" { return (parsed, model == "c172m" ? [] : ["1974 reference is C172M only"]) }
+        if mode == "c172m1974" { return (parsed, model == "c172m" && phase != "climb" ? [] : ["No 1974 reference table for this model / phase"]) }
         for key in ["source", "conditions"] where parsed[key].text.isEmpty { issues.append("POH \(key) is required") }
         if rows.isEmpty { issues.append("Enter at least one complete POH row") }
-        if phase == "cruise" {
+        if phase == "climb" {
+            for key in climbRules where parsed[key] == .null { issues.append(key + ": required (enter 0 when the POH specifies none)") }
+            if let step = parsed["warm_temp_step_c"].double, step <= 0 { issues.append("Temperature step must be positive") }
+            if normalized.count < 2 { issues.append("Climb requires at least two complete altitude rows") }
+            if !normalized.contains(where: { $0.object.values.contains(.null) }) {
+                let ordered = normalized.sorted { $0["pa_ft"].double! < $1["pa_ft"].double! }
+                for (first, last) in zip(ordered, ordered.dropFirst()) {
+                    for key in ["time_from_sl_min", "fuel_from_sl_gal", "distance_from_sl_nm"] where last[key].double! < first[key].double! { issues.append("Cumulative climb values cannot decrease: " + key) }
+                }
+                parsed["rows"] = .array(ordered)
+            }
+        } else if phase == "cruise" {
             if parsed["reference_weight_lb"] == .null { issues.append("Reference weight is required") }
         } else {
             for kind in ["headwind", "tailwind"] {
@@ -147,7 +165,8 @@ enum NativeValidation {
         }
         wb["cg_limits"] = .array(limits); result["wb"] = wb
         for phase in phases {
-            let supplied = raw["performance"][phase] == .null ? result["performance"][phase] : raw["performance"][phase]
+            let fallback = phase == "climb" ? defaultClimb(model: result["model_id"].text) : result["performance"][phase]
+            let supplied = raw["performance"][phase] == .null ? fallback : raw["performance"][phase]
             let (table, _) = try dataset(supplied, phase: phase, model: result["model_id"].text)
             result["performance"][phase] = table
             if table["mode"].text == "c172m1974", result["year"].double != 1974 { issues.append("Model year mismatch: 1974 reference requires year 1974") }

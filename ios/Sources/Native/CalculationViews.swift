@@ -26,6 +26,10 @@ func fieldName(_ key: String, chinese: Bool = false) -> String {
         "standard_oat_at_pressure_alt_c": ("ISA at start", "起始标准温度"),
         "climb_speed_kias_at_start": ("Initial climb speed", "起始爬升速度"), "climb_speed_kias_at_target": ("Target climb speed", "目标高度爬升速度"),
         "rate_of_climb_fpm_at_start": ("Initial climb rate", "起始爬升率"), "rate_of_climb_fpm_at_target": ("Target climb rate", "目标高度爬升率"),
+        "pa_ft": ("Pressure altitude", "压力高度"), "std_temp_c": ("Standard temperature", "标准温度"),
+        "climb_speed_kias": ("Climb speed", "爬升速度"), "rate_fpm": ("Climb rate", "爬升率"),
+        "time_from_sl_min": ("Cumulative time from sea level", "从海平面累计时间"), "fuel_from_sl_gal": ("Cumulative fuel from sea level", "从海平面累计用油"),
+        "distance_from_sl_nm": ("Cumulative distance from sea level", "从海平面累计距离"),
         "empty_weight_lb": ("Basic empty weight", "基本空重"), "empty_moment_lb_in": ("Empty moment (full lb-in)", "空机力矩（完整 lb-in）"),
         "fuel_density_lb_gal": ("Fuel density", "燃油密度"), "fuel_arm_in": ("Fuel arm", "燃油力臂"), "usable_fuel_gal": ("Usable fuel", "可用燃油"),
         "max_ramp_lb": ("Maximum ramp weight", "最大停机重量"), "max_takeoff_lb": ("Maximum takeoff weight", "最大起飞重量"),
@@ -72,7 +76,7 @@ struct AircraftSelection: View {
     @EnvironmentObject var store: NativeStore
     var body: some View {
         Picker(store.label("Aircraft", "飞机"), selection: Binding(get: { store.activeID }, set: { store.select($0) })) {
-            Text("C172N — Demo").tag("demo")
+            if store.profiles.isEmpty { Text(store.label("No aircraft", "暂无飞机")).tag("") }
             ForEach(Array(store.profiles.enumerated()), id: \.offset) { _, profile in
                 Text(profile["registration"].text + " / " + profile["name"].text).tag(profile["id"].text)
             }
@@ -160,6 +164,7 @@ struct PerformanceView: View {
                         } catch { self.error = error.localizedDescription; calculation = nil }
                     } label: { Label(store.label("Calculate", "计算"), systemImage: "equal.square") }
                     .accessibilityIdentifier("calculate-performance")
+                    .disabled(store.activeProfile == nil)
                     .id("calculate-anchor")
                 }
                 if let error { Section { Text(error).foregroundStyle(.red).accessibilityIdentifier("calculation-error") } }

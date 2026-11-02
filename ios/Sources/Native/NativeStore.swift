@@ -7,7 +7,7 @@ import TabularData
 @MainActor
 final class NativeStore: ObservableObject {
     @Published private(set) var profiles: [J] = []
-    @Published private(set) var activeID = "demo"
+    @Published private(set) var activeID = ""
     @Published var chinese = false
     @Published var errorMessage: String?
     @Published var startupError: String?
@@ -28,10 +28,10 @@ final class NativeStore: ObservableObject {
                 profiles = try value["profiles"].array.map { try NativeValidation.profile($0, catalogue: engine.data["catalogue"]).0 }
                 activeID = value["activeId"].text
                 chinese = value["chinese"].flag
-                if !profiles.contains(where: { $0["id"].text == activeID }) { activeID = "demo" }
+                if !profiles.contains(where: { $0["id"].text == activeID }) { activeID = profiles.first?["id"].text ?? "" }
             } else {
-                profiles = engine.data["profiles"].array
-                activeID = profiles.first?["id"].text ?? "demo"
+                profiles = try engine.data["profiles"].array.map { try NativeValidation.profile($0, catalogue: engine.data["catalogue"]).0 }
+                activeID = profiles.first?["id"].text ?? ""
                 try persist(profiles, active: activeID)
             }
         } catch {
@@ -41,7 +41,7 @@ final class NativeStore: ObservableObject {
     }
 
     var activeProfile: J? { profiles.first { $0["id"].text == activeID } }
-    var displayProfile: J { activeProfile ?? engine?.data["profiles"][0] ?? .null }
+    var displayProfile: J { activeProfile ?? .null }
     func label(_ en: String, _ zh: String) -> String { chinese ? zh : en }
     func issues(_ profile: J) -> [String] { (try? NativeValidation.profile(profile, catalogue: engine?.data["catalogue"] ?? .null).1) ?? ["Invalid profile"] }
     private func persist(_ next: [J], active: String) throws {
@@ -51,6 +51,7 @@ final class NativeStore: ObservableObject {
         try value.encoded().write(to: file, options: .atomic)
     }
     func select(_ id: String) {
+        guard profiles.contains(where: { $0["id"].text == id }) else { return }
         do { try persist(profiles, active: id); activeID = id }
         catch { errorMessage = error.localizedDescription }
     }
@@ -66,11 +67,12 @@ final class NativeStore: ObservableObject {
         var next = profiles.filter { $0["id"] != profile["id"] }
         next.append(profile)
         guard next.count <= 100 else { throw CalculationError("Maximum 100 aircraft profiles") }
-        try persist(next, active: activeID); profiles = next
+        let active = activeProfile == nil ? profile["id"].text : activeID
+        try persist(next, active: active); profiles = next; activeID = active
     }
     func delete(_ id: String) throws {
         let next = profiles.filter { $0["id"].text != id }
-        let active = activeID == id ? "demo" : activeID
+        let active = activeID == id ? next.first?["id"].text ?? "" : activeID
         try persist(next, active: active); profiles = next; activeID = active
     }
     func importBackup(_ data: Data) throws {
@@ -83,7 +85,8 @@ final class NativeStore: ObservableObject {
             value["id"] = .string(UUID().uuidString); return value
         }
         let next = profiles + imported
-        try persist(next, active: activeID); profiles = next
+        let active = activeProfile == nil ? imported[0]["id"].text : activeID
+        try persist(next, active: active); profiles = next; activeID = active
     }
     func backup() throws -> Data { try J.object(["version": .number(1), "profiles": .array(profiles)]).encoded() }
 }

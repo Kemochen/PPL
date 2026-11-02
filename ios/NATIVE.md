@@ -10,12 +10,24 @@ Branch: `codex/swift-native`. Deployment target: iOS 26+.
 - Apple TabularData parses CSV/TSV files. Aircraft backups retain the website's
   version-1 JSON format; full-precision moments and table values are preserved.
 - Native data validation keeps drafts separate from calculable W&B / POH tables.
+- Aircraft selection lists saved aircraft only; legacy Demo selections resolve to
+  the first saved aircraft. With no aircraft, calculation is disabled until one is added.
+- Each aircraft has takeoff, landing, cruise and climb datasets. Climb manual tables
+  use `pa_ft,std_temp_c,climb_speed_kias,rate_fpm,time_from_sl_min,fuel_from_sl_gal,distance_from_sl_nm`.
+  Rows are cumulative from sea level, not individual climb segments; cumulative
+  time/fuel/distance must not decrease with altitude. CSV/TSV import/export is supported.
+  Record the POH conditions and the warm-temperature percentage, temperature step
+  and start/taxi/takeoff fuel allowance; no cold-temperature reduction is assumed.
+  Other POH correction models are not represented by this table format.
+- Existing C172N profiles retain the built-in climb table. Other models start with
+  climb unconfigured, never borrowing C172N performance. Native JSON backups retain
+  climb datasets; older website versions do not support this additional dataset.
 - C172N built-in data and the explicitly labelled 1974 C172M reference remain
   separate. No missing FFCT empty weight/moment is copied from GFJE.
 
 The existing website remains a separate Python application. At build time,
 `export_native_data.py` copies its POH numbers and model catalogue into the
-74 KB `Resources/NativeData.json`, and generates reference test cases. Python is
+76 KB `Resources/NativeData.json`, and generates reference test cases. Python is
 only a build/test tool and is not included in the IPA. Do not manually change
 the generated POH file without updating its source and verification cases.
 

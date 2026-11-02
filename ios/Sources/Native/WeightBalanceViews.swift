@@ -30,6 +30,7 @@ struct WeightBalanceView: View {
                         } catch { self.error = error.localizedDescription; calculation = nil }
                     } label: { Label(store.label("Calculate W&B", "计算重量与重心"), systemImage: "equal.square") }
                     .accessibilityIdentifier("calculate-wb")
+                    .disabled(store.activeProfile == nil)
                 }
                 if let error { Section { Text(error).foregroundStyle(.red) } }
                 if let calculation {

@@ -1,6 +1,21 @@
 import XCTest
 
 final class NativeUITests: XCTestCase {
+    func testNewAircraftIncludesClimbPOHEditorWithoutDemo() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = XCUIApplication(); app.launch()
+        let aircraft = app.tabBars.buttons["Aircraft"]
+        XCTAssertTrue(aircraft.waitForExistence(timeout: 20)); aircraft.tap()
+        XCTAssertFalse(app.staticTexts["C172N — Demo"].exists)
+        app.buttons["New aircraft"].tap()
+        app.buttons["new-model-c172n"].tap()
+        let climb = app.buttons["aircraft-poh-climb"]
+        for _ in 0..<18 where !climb.isHittable { app.swipeUp() }
+        XCTAssertTrue(climb.isHittable); climb.tap()
+        XCTAssertTrue(app.navigationBars["Climb POH"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["poh-mode-climb"].firstMatch.exists)
+        saveScreenshot(app, "native-aircraft-climb-editor")
+    }
     func testNativePerformanceAndLandscape() throws {
         XCUIDevice.shared.orientation = .portrait
         let app = XCUIApplication(); app.launch()

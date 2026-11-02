@@ -44,7 +44,7 @@ struct AircraftListView: View {
                 } label: { Image(systemName: "square.and.arrow.up") }.accessibilityLabel("Export aircraft backup")
                 Menu {
                     ForEach(Array((store.engine?.data["catalogue"].array ?? []).enumerated()), id: \.offset) { _, model in
-                        Button(model["name"].text) { newProfile = ProfileSheet(profile: model["template"]) }
+                        Button(model["name"].text) { newProfile = ProfileSheet(profile: model["template"]) }.accessibilityIdentifier("new-model-" + model["id"].text)
                     }
                 } label: { Image(systemName: "plus") }.accessibilityLabel("New aircraft")
             }
@@ -141,6 +141,7 @@ struct AircraftEditor: View {
                     NavigationLink(phase.capitalized) {
                         DatasetEditor(table: Binding(get: { draft["performance"][phase] }, set: { draft["performance"][phase] = $0 }), phase: phase, model: draft["model_id"].text, year: draft["year"].double)
                     }
+                    .accessibilityIdentifier("aircraft-poh-" + phase)
                 }
             }
             Section {

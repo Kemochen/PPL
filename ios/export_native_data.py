@@ -17,6 +17,15 @@ def export():
                 builtin={phase: builtin_dataset(phase) for phase in ("takeoff", "landing", "cruise")},
                 reference={phase: table_view(phase) for phase in ("takeoff", "landing", "cruise")},
                 climb=[dict(pa_ft=float(altitude), **{key: float(value) for key, value in climb.table_at(altitude).items()}) for altitude in climb.alt])
+    data["builtin"]["climb"] = dict(
+        mode="manual", source="Existing C172N POH Figure 5-6 table; verify edition and aircraft applicability",
+        conditions="Cumulative sea-level time, fuel and distance; use only at the POH weight and configuration. No cold-temperature credit.",
+        warm_temp_pct=10.0, warm_temp_step_c=10.0, start_taxi_takeoff_fuel_gal=1.1,
+        rows=data["climb"])
+    for profile in data["profiles"] + [model["template"] for model in data["catalogue"]]:
+        profile["performance"]["climb"] = dict(
+            mode="builtin" if profile["model_id"] == "c172n" else "none",
+            source="", conditions="", rows=[])
     destination = ROOT / "ios/Resources/NativeData.json"
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(data, allow_nan=False, separators=(",", ":")), encoding="utf-8")

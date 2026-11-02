@@ -37,8 +37,9 @@ struct DatasetEditor: View {
                     Text(store.label("Not configured", "未配置")).tag("none")
                     Text(store.label("Manual POH table", "手动 POH 表")).tag("manual")
                     if model == "c172n" { Text("C172N built-in").tag("builtin") }
-                    if model == "c172m" { Text("1974 C172M reference").tag("c172m1974").disabled(year != 1974) }
+                    if model == "c172m" && phase != "climb" { Text("1974 C172M reference").tag("c172m1974").disabled(year != 1974) }
                 }
+                .accessibilityIdentifier("poh-mode-" + phase)
                 TextField(store.label("POH edition / figure / page", "POH 版本／图号／页码"), text: binding("source"), axis: .vertical)
                 TextField(store.label("Conditions", "适用条件"), text: binding("conditions"), axis: .vertical)
                 if issues.isEmpty { Label(store.label("Table ready", "表格可用"), systemImage: "checkmark.circle").foregroundStyle(.green) }
@@ -47,7 +48,8 @@ struct DatasetEditor: View {
             if mode == "manual" {
                 if phase == "cruise" {
                     Section { NumberRow(title: store.label("Reference weight", "参考重量"), unit: "lb", text: binding("reference_weight_lb")) }
-                } else { rulesSection }
+                } else if phase == "climb" { climbRulesSection }
+                else { rulesSection }
                 Section(store.label("POH rows", "POH 数据行")) {
                     ForEach(Array(table["rows"].array.enumerated()), id: \.offset) { index, row in
                         NavigationLink {
@@ -121,6 +123,13 @@ struct DatasetEditor: View {
             if table["grass_mode"].text != "none" { NumberRow(title: "Grass change", unit: "%", text: binding("grass_pct")) }
         }
     }
+    private var climbRulesSection: some View {
+        Section(store.label("POH climb correction rules", "POH 爬升修正规则")) {
+            NumberRow(title: store.label("Warm-temperature increase", "高温增加比例"), unit: "%", text: binding("warm_temp_pct"))
+            NumberRow(title: store.label("Above-standard temperature step", "高于标准温度的间隔"), unit: "°C", text: binding("warm_temp_step_c"))
+            NumberRow(title: store.label("Start / taxi / takeoff fuel", "启动／滑行／起飞用油"), unit: "US gal", text: binding("start_taxi_takeoff_fuel_gal"))
+        }
+    }
     private func replaceRows(_ text: String) {
         do {
             let rows = try NativeCSV.read(text, phase: phase)
@@ -133,6 +142,7 @@ struct DatasetEditor: View {
 }
 
 struct POHRowEditor: View {
+    @EnvironmentObject var store: NativeStore
     @Binding var row: J
     var phase: String
     var index: Int
@@ -140,7 +150,7 @@ struct POHRowEditor: View {
     var body: some View {
         Form {
             ForEach(NativeValidation.columns[phase] ?? [], id: \.self) { key in
-                NumberRow(title: key, text: Binding(get: { jsonText(row[key]) }, set: { row[key] = .string($0) })).focused($keyboard)
+                NumberRow(title: fieldName(key, chinese: store.chinese), unit: unitFor(key), text: Binding(get: { jsonText(row[key]) }, set: { row[key] = .string($0) })).focused($keyboard)
             }
         }.navigationTitle("POH row \(index + 1)")
             .toolbar { ToolbarItemGroup(placement: .keyboard) { Spacer(); Button("Done") { keyboard = false; endNativeEditing() } } }
