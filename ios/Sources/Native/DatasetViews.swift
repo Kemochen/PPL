@@ -127,6 +127,7 @@ struct DatasetEditor: View {
         Section(store.label("POH climb correction rules", "POH 爬升修正规则")) {
             NumberRow(title: store.label("Warm-temperature increase", "高温增加比例"), unit: "%", text: binding("warm_temp_pct"))
             NumberRow(title: store.label("Above-standard temperature step", "高于标准温度的间隔"), unit: "°C", text: binding("warm_temp_step_c"))
+                .disabled(table["warm_temp_pct"].double == 0)
             NumberRow(title: store.label("Start / taxi / takeoff fuel", "启动／滑行／起飞用油"), unit: "US gal", text: binding("start_taxi_takeoff_fuel_gal"))
         }
     }

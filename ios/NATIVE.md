@@ -18,6 +18,7 @@ Branch: `codex/swift-native`. Deployment target: iOS 26+.
   time/fuel/distance must not decrease with altitude. CSV/TSV import/export is supported.
   Record the POH conditions and the warm-temperature percentage, temperature step
   and start/taxi/takeoff fuel allowance; no cold-temperature reduction is assumed.
+  A zero warm-temperature percentage needs no temperature step.
   Other POH correction models are not represented by this table format.
 - Existing C172N profiles retain the built-in climb table. Other models start with
   climb unconfigured, never borrowing C172N performance. Native JSON backups retain

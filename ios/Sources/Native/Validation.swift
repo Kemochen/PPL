@@ -76,8 +76,8 @@ enum NativeValidation {
         for key in ["source", "conditions"] where parsed[key].text.isEmpty { issues.append("POH \(key) is required") }
         if rows.isEmpty { issues.append("Enter at least one complete POH row") }
         if phase == "climb" {
-            for key in climbRules where parsed[key] == .null { issues.append(key + ": required (enter 0 when the POH specifies none)") }
-            if let step = parsed["warm_temp_step_c"].double, step <= 0 { issues.append("Temperature step must be positive") }
+            for key in ["warm_temp_pct", "start_taxi_takeoff_fuel_gal"] where parsed[key] == .null { issues.append(key + ": required (enter 0 when the POH specifies none)") }
+            if (parsed["warm_temp_pct"].double ?? 0) > 0 && (parsed["warm_temp_step_c"].double ?? 0) <= 0 { issues.append("A positive temperature step is required for a nonzero correction") }
             if normalized.count < 2 { issues.append("Climb requires at least two complete altitude rows") }
             if !normalized.contains(where: { $0.object.values.contains(.null) }) {
                 let ordered = normalized.sorted { $0["pa_ft"].double! < $1["pa_ft"].double! }

@@ -260,11 +260,15 @@ struct NativeEngine {
         }
         let first = try at(start, name: "Start"), last = try at(target, name: "Target")
         let percent = try NativeValidation.required(table["warm_temp_pct"], "Warm-temperature percentage")
-        let step = try NativeValidation.required(table["warm_temp_step_c"], "Warm-temperature step")
+        let step = percent == 0 ? 1 : try NativeValidation.required(table["warm_temp_step_c"], "Warm-temperature step")
         let extraFuel = try NativeValidation.required(table["start_taxi_takeoff_fuel_gal"], "Start / taxi / takeoff fuel")
         guard step > 0 else { throw CalculationError("Temperature step must be positive") }
         let factor = 1 + percent / 100 * max(oat - first["std_temp_c"]!, 0) / step
-        steps.append(MathStep(title: "Temperature factor", formula: "+\(n(percent))% per \(n(step))°C above standard at start; no cold reduction", value: "1.0 + (\(n(percent)) / 100.0) × max(\(n(oat)) − (\(n(first["std_temp_c"]!))), 0.0) / \(n(step)) = \(n(factor * 100))%"))
+        if percent == 0 {
+            steps.append(MathStep(title: "Temperature factor", formula: "Recorded POH warm-temperature increase: 0.0%", value: "No temperature adjustment: 100.0%"))
+        } else {
+            steps.append(MathStep(title: "Temperature factor", formula: "+\(n(percent))% per \(n(step))°C above standard at start; no cold reduction", value: "1.0 + (\(n(percent)) / 100.0) × max(\(n(oat)) − (\(n(first["std_temp_c"]!))), 0.0) / \(n(step)) = \(n(factor * 100))%"))
+        }
         var values = ["pressure_alt_ft": start, "target_alt_ft": target, "oat_c": oat, "standard_oat_at_pressure_alt_c": first["std_temp_c"]!,
                       "climb_speed_kias_at_start": first["climb_speed_kias"]!, "climb_speed_kias_at_target": last["climb_speed_kias"]!,
                       "rate_of_climb_fpm_at_start": first["rate_fpm"]!, "rate_of_climb_fpm_at_target": last["rate_fpm"]!]

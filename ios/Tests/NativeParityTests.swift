@@ -72,6 +72,10 @@ final class NativeParityTests: XCTestCase {
         XCTAssertEqual(result.result["fuel_used_gal_with_start_taxi_takeoff"].double, 1.7)
         XCTAssertEqual(result.result["distance_to_climb_nm"].double, 3.6)
         XCTAssertTrue(result.steps.contains { $0.title == "Temperature factor" && $0.value.contains("20.0") })
+        var uncorrected = profile
+        uncorrected["performance"]["climb"]["warm_temp_pct"] = .number(0)
+        uncorrected["performance"]["climb"]["warm_temp_step_c"] = .null
+        XCTAssertEqual(try engine.calculate("climb", form: form, profile: uncorrected).result["time_to_climb_min"].double, 2)
         XCTAssertThrowsError(try engine.calculate("climb", form: .numbers(["pressure_altitude_ft": 0, "target_altitude_ft": 1001, "oat_c": 15]), profile: profile))
         table["rows"][1]["fuel_from_sl_gal"] = .number(-1)
         XCTAssertThrowsError(try NativeValidation.dataset(table, phase: "climb", model: "c172m"))
