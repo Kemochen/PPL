@@ -260,7 +260,7 @@ struct NativeEngine {
         }
         let first = try at(start, name: "Start"), last = try at(target, name: "Target")
         let percent = try NativeValidation.required(table["warm_temp_pct"], "Warm-temperature percentage")
-        let step = percent == 0 ? 1 : try NativeValidation.required(table["warm_temp_step_c"], "Warm-temperature step")
+        let step = try (percent == 0 ? 1 : NativeValidation.required(table["warm_temp_step_c"], "Warm-temperature step"))
         let extraFuel = try NativeValidation.required(table["start_taxi_takeoff_fuel_gal"], "Start / taxi / takeoff fuel")
         guard step > 0 else { throw CalculationError("Temperature step must be positive") }
         let factor = 1 + percent / 100 * max(oat - first["std_temp_c"]!, 0) / step
